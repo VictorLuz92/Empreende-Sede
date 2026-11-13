@@ -27,13 +27,13 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg-page);
+    background: var(--bg-surface);
     color: var(--text-primary);
     min-height: 100vh;
     min-height: 100dvh;
+    margin: 0;
+    padding: 0;
     display: flex;
-    justify-content: center;
-    padding: 12px;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -41,19 +41,21 @@ body {
     display: none !important;
 }
 
-/* Container principal responsivo (Mobile-first -> Tablet -> Desktop) */
+/* Container principal ocupando toda a tela (Mobile, Tablet e Desktop) */
 .app-shell {
     width: 100%;
-    max-width: 480px;
+    max-width: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
     background: var(--bg-surface);
-    border: 1.5px solid var(--border-color);
-    border-radius: 20px;
-    box-shadow: var(--shadow-md);
-    padding: 16px 16px 22px;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 18px 20px 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    align-self: flex-start;
+    gap: 20px;
 }
 
 /* Header conforme wireframe */
@@ -233,23 +235,28 @@ body {
 
 /* Área principal do card da empresa */
 .showcase-area {
+    flex: 1;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    justify-content: space-between;
+    gap: 20px;
 }
 
 .company-card {
+    width: 100%;
+    margin: auto 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
 }
 
 /* Logo da empresa (quadrado grande arredondado do wireframe) */
 .company-logo-frame {
     position: relative;
     width: 100%;
-    max-width: 310px;
+    max-width: 440px;
     aspect-ratio: 4 / 3;
     border: 1.5px solid var(--border-strong);
     border-radius: var(--radius-lg);
@@ -785,19 +792,14 @@ body {
 }
 
 /* =========================================================
-   Responsividade: Celular, Tablet e Computador
+   Responsividade: Celular, Tablet e Computador (Tela Cheia)
    ========================================================= */
 
 /* Celular (telas menores que 480px) */
 @media (max-width: 480px) {
-    body {
-        padding: 8px;
-    }
-
     .app-shell {
-        border-radius: 16px;
-        padding: 14px 14px 18px;
-        gap: 14px;
+        padding: 14px 16px 20px;
+        gap: 16px;
     }
 
     .brand-box {
@@ -854,15 +856,9 @@ body {
 
 /* Tablet pequeno (640px+) */
 @media (min-width: 640px) {
-    body {
-        padding: 24px 20px;
-    }
-
     .app-shell {
-        max-width: 680px;
-        border-radius: 24px;
-        padding: 24px 26px 30px;
-        gap: 20px;
+        padding: 24px 32px 28px;
+        gap: 22px;
     }
 
     .brand-box {
@@ -881,19 +877,18 @@ body {
     }
 }
 
-/* Tablet (768px - 1023px): layout em 2 colunas no card da empresa */
+/* Tablet (768px - 1023px): layout em 2 colunas proporcional à tela toda */
 @media (min-width: 768px) {
     .app-shell {
-        max-width: 840px;
-        padding: 26px 30px 32px;
+        padding: 28px 40px 32px;
     }
 
     .company-card {
         display: grid;
-        grid-template-columns: 270px 1fr;
+        grid-template-columns: minmax(280px, 42%) 1fr;
         grid-template-rows: auto auto auto;
         align-items: start;
-        gap: 16px 24px;
+        gap: 20px 32px;
     }
 
     .company-logo-frame {
@@ -906,15 +901,15 @@ body {
     .company-description-box {
         grid-column: 2;
         grid-row: 1;
-        padding: 18px 20px;
+        padding: 20px 24px;
     }
 
     .company-name {
-        font-size: 1.22rem;
+        font-size: 1.3rem;
     }
 
     .company-description {
-        font-size: 0.95rem;
+        font-size: 0.98rem;
     }
 
     .company-phone-row {
@@ -933,51 +928,46 @@ body {
 
 /* Computador / Desktop (1024px+) */
 @media (min-width: 1024px) {
-    body {
-        padding: 36px 28px;
-    }
-
     .app-shell {
-        max-width: 1040px;
-        padding: 30px 36px 36px;
-        gap: 24px;
+        padding: 32px 56px 36px;
+        gap: 26px;
     }
 
     .brand-box {
-        padding: 10px 26px;
-        font-size: 1.15rem;
+        padding: 10px 28px;
+        font-size: 1.18rem;
     }
 
     .search-box {
-        padding: 10px 14px;
+        padding: 12px 16px;
     }
 
     .company-card {
-        grid-template-columns: 340px 1fr;
-        gap: 18px 30px;
+        grid-template-columns: minmax(380px, 44%) 1fr;
+        gap: 22px 44px;
     }
 
     .company-description-box {
-        padding: 20px 24px;
-        min-height: 140px;
+        padding: 24px 28px;
+        min-height: 160px;
     }
 
     .company-name {
-        font-size: 1.35rem;
+        font-size: 1.5rem;
     }
 
     .company-description {
-        font-size: 0.98rem;
-        line-height: 1.6;
+        font-size: 1.04rem;
+        line-height: 1.65;
     }
 
     .pager-row {
-        padding-top: 12px;
+        padding-top: 16px;
     }
 
     .pager-btn {
-        padding: 9px 18px;
-        font-size: 0.9rem;
+        padding: 10px 20px;
+        font-size: 0.94rem;
     }
 
     .modal-card {
@@ -989,11 +979,11 @@ body {
 /* Telas grandes (1280px+) */
 @media (min-width: 1280px) {
     .app-shell {
-        max-width: 1120px;
+        padding: 36px 80px 40px;
     }
 
     .company-card {
-        grid-template-columns: 380px 1fr;
-        gap: 20px 34px;
+        grid-template-columns: minmax(440px, 42%) 1fr;
+        gap: 24px 56px;
     }
 }
