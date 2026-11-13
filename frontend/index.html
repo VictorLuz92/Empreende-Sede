@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empreende Sede — Vitrine de Empresas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <!-- Header conforme wireframe: menu (esq), logo Empreende Sede (centro), Perfil (dir) -->
+        <header class="topbar">
+            <button id="menuBtn" class="icon-btn hamburger-btn" aria-label="Abrir menu" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <a href="#" id="logoBtn" class="brand-box" aria-label="Empreende Sede - Início">
+                Empreende Sede
+            </a>
+
+            <button id="profileBtn" class="profile-btn" aria-label="Abrir perfil">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"></path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Barra de status da conexão (Backend / Modo Demo) -->
+        <div id="connectionBanner" class="connection-banner hidden" role="status"></div>
+
+        <!-- Barra de pesquisa de empresa conforme wireframe -->
+        <section class="search-section" aria-label="Pesquisa de empresas">
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m20 20-3.5-3.5"></path>
+                </svg>
+                <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Pesquisar empresa por nome ou segmento..."
+                    autocomplete="off"
+                    aria-label="Pesquisar empresa"
+                >
+                <button id="clearSearchBtn" class="clear-btn hidden" aria-label="Limpar pesquisa">&times;</button>
+            </div>
+
+            <!-- Lista rápida de resultados / chips para navegar entre empresas -->
+            <div id="resultsStrip" class="results-strip" aria-label="Empresas encontradas"></div>
+        </section>
+
+        <!-- Área principal: Card central da empresa conforme wireframe -->
+        <main class="showcase-area">
+            <div id="loadingState" class="state-card hidden">
+                <div class="spinner"></div>
+                <p>Carregando empresas...</p>
+            </div>
+
+            <div id="emptyState" class="state-card hidden">
+                <p>Nenhuma empresa encontrada para essa busca.</p>
+                <button id="resetFilterBtn" class="btn-secondary">Mostrar todas</button>
+            </div>
+
+            <article id="companyCard" class="company-card" aria-live="polite">
+                <!-- Logo da empresa (quadrado grande arredondado do wireframe) -->
+                <div class="company-logo-frame">
+                    <img id="companyLogoImg" src="" alt="" class="company-logo-img hidden">
+                    <div id="companyLogoFallback" class="company-logo-fallback">
+                        <span id="companyInitials">ES</span>
+                    </div>
+                    <span id="companyCategoryBadge" class="category-badge">Categoria</span>
+                </div>
+
+                <!-- Nome e Descrição da empresa (retângulo arredondado do wireframe) -->
+                <div class="company-description-box">
+                    <div class="company-header-row">
+                        <h1 id="companyName" class="company-name">Carregando...</h1>
+                        <div class="card-actions">
+                            <button id="editCompanyBtn" class="mini-action-btn" title="Editar empresa" aria-label="Editar empresa">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 20h9"></path>
+                                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p id="companyDescription" class="company-description"></p>
+                </div>
+
+                <!-- Telefone (retângulo menor do wireframe) -->
+                <div class="company-phone-row">
+                    <a id="companyPhoneLink" href="#" class="company-phone-box" title="Ligar para a empresa">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        <span id="companyPhoneText">(00) 00000-0000</span>
+                    </a>
+                    <button id="copyPhoneBtn" class="copy-phone-btn" title="Copiar telefone" aria-label="Copiar telefone">
+                        Copiar
+                    </button>
+                </div>
+
+                <!-- Ícones sociais inferiores conforme wireframe: WhatsApp (círculo) e Instagram (quadrado arredondado) -->
+                <div class="social-row">
+                    <a id="whatsappLink" href="#" target="_blank" rel="noopener noreferrer" class="social-btn whatsapp-btn" aria-label="Conversar no WhatsApp" title="WhatsApp">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.79 14.12c-.24.68-1.41 1.3-1.95 1.38-.5.07-1.13.1-1.82-.12-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.79-4.18-4.94-4.38-.14-.2-1.18-1.57-1.18-3s.75-2.13 1.01-2.42c.27-.29.58-.36.77-.36h.55c.18 0 .42-.07.65.5.24.58.82 2 .89 2.14.07.15.12.32.02.51-.1.2-.15.32-.29.49-.15.17-.31.38-.44.51-.14.15-.3.31-.13.61.17.29.75 1.24 1.61 2.01 1.11.99 2.04 1.3 2.33 1.44.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.65-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.07.12.07.7-.17 1.38z"/>
+                        </svg>
+                    </a>
+
+                    <a id="instagramLink" href="#" target="_blank" rel="noopener noreferrer" class="social-btn instagram-btn" aria-label="Abrir Instagram" title="Instagram">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <rect x="2.5" y="2.5" width="19" height="19" rx="5"></rect>
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle>
+                        </svg>
+                    </a>
+                </div>
+            </article>
+
+            <!-- Navegação entre empresas -->
+            <div id="pagerRow" class="pager-row">
+                <button id="prevCompanyBtn" class="pager-btn" aria-label="Empresa anterior">&larr; Anterior</button>
+                <span id="pagerCounter" class="pager-counter">1 / 1</span>
+                <button id="nextCompanyBtn" class="pager-btn" aria-label="Próxima empresa">Próxima &rarr;</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Drawer do Menu Lateral -->
+    <div id="drawerBackdrop" class="backdrop hidden"></div>
+    <aside id="menuDrawer" class="drawer" aria-hidden="true">
+        <div class="drawer-header">
+            <h2>Menu</h2>
+            <button id="closeDrawerBtn" class="icon-close-btn" aria-label="Fechar menu">&times;</button>
+        </div>
+
+        <nav class="drawer-nav">
+            <button id="newCompanyMenuBtn" class="drawer-action-primary">+ Cadastrar Empresa</button>
+
+            <div class="drawer-section">
+                <h3>Categorias</h3>
+                <div id="categoryList" class="category-list"></div>
+            </div>
+
+            <div class="drawer-section drawer-footer-info">
+                <h3>Sobre o Empreende Sede</h3>
+                <p>Portal de divulgação e conexão direta com empreendedores locais.</p>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Modal de Perfil -->
+    <div id="profileModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="profileModalTitle">Perfil do Empreendedor</h2>
+                <button class="icon-close-btn" data-close-modal="profileModal" aria-label="Fechar">&times;</button>
+            </div>
+            <div class="profile-summary">
+                <div class="profile-avatar-lg">ES</div>
+                <div>
+                    <p class="profile-name">Empreendedor Local</p>
+                    <p class="profile-email">contato@empreendesede.com.br</p>
+                </div>
+            </div>
+            <div class="modal-actions-stack">
+                <button id="openCreateFromProfileBtn" class="btn-primary">Cadastrar Nova Empresa</button>
+                <button id="openEditFromProfileBtn" class="btn-secondary">Editar Empresa Exibida</button>
+                <button id="deleteCurrentCompanyBtn" class="btn-danger">Remover Empresa Exibida</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cadastro / Edição de Empresa -->
+    <div id="companyFormModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="formModalTitle">Cadastrar Empresa</h2>
+                <button class="icon-close-btn" data-close-modal="companyFormModal" aria-label="Fechar">&times;</button>
+            </div>
+
+            <form id="companyForm" class="company-form">
+                <input type="hidden" id="formCompanyId">
+
+                <label>
+                    Nome da Empresa *
+                    <input type="text" id="formName" required maxlength="150" placeholder="Ex: Café & Prosa Artesanal">
+                </label>
+
+                <label>
+                    Categoria *
+                    <input type="text" id="formCategory" required maxlength="80" placeholder="Ex: Gastronomia, Tecnologia, Serviços">
+                </label>
+
+                <label>
+                    URL da Logo (opcional)
+                    <input type="url" id="formLogoUrl" placeholder="https://...">
+                </label>
+
+                <label>
+                    Descrição da Empresa *
+                    <textarea id="formDescription" rows="3" required placeholder="Conte o que sua empresa faz e seus diferenciais..."></textarea>
+                </label>
+
+                <div class="form-grid-2">
+                    <label>
+                        Telefone *
+                        <input type="tel" id="formPhone" required maxlength="30" placeholder="(11) 99999-9999">
+                    </label>
+                    <label>
+                        WhatsApp (com DDD)
+                        <input type="tel" id="formWhatsapp" maxlength="30" placeholder="5511999999999">
+                    </label>
+                </div>
+
+                <label>
+                    Instagram (usuário sem @)
+                    <input type="text" id="formInstagram" maxlength="120" placeholder="suaempresa.oficial">
+                </label>
+
+                <div class="form-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="companyFormModal">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
