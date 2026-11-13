@@ -31,14 +31,14 @@ public class CompanyController {
 
     @GetMapping
     public List<CompanyResponse> list(
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) String category
+            @RequestParam(name = "q", required = false) String q,
+            @RequestParam(name = "category", required = false) String category
     ) {
         return companyService.listCompanies(q, category);
     }
 
     @GetMapping("/{id}")
-    public CompanyResponse getById(@PathVariable UUID id) {
+    public CompanyResponse getById(@PathVariable("id") UUID id) {
         return companyService.getById(id);
     }
 
@@ -54,12 +54,12 @@ public class CompanyController {
     }
 
     @PutMapping("/{id}")
-    public CompanyResponse update(@PathVariable UUID id, @Valid @RequestBody CompanyRequest request) {
+    public CompanyResponse update(@PathVariable("id") UUID id, @Valid @RequestBody CompanyRequest request) {
         return companyService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         companyService.deactivate(id);
         return ResponseEntity.noContent().build();
     }
