@@ -30,27 +30,29 @@ body {
     background: var(--bg-page);
     color: var(--text-primary);
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
-    padding: 16px;
+    padding: 12px;
+    -webkit-font-smoothing: antialiased;
 }
 
 .hidden {
     display: none !important;
 }
 
-/* Container principal estilo app mobile/card centralizado */
+/* Container principal responsivo (Mobile-first -> Tablet -> Desktop) */
 .app-shell {
     width: 100%;
     max-width: 480px;
     background: var(--bg-surface);
     border: 1.5px solid var(--border-color);
-    border-radius: 24px;
+    border-radius: 20px;
     box-shadow: var(--shadow-md);
-    padding: 20px 20px 26px;
+    padding: 16px 16px 22px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
     align-self: flex-start;
 }
 
@@ -291,6 +293,7 @@ body {
 /* Descrição da empresa (retângulo arredondado do wireframe) */
 .company-description-box {
     width: 100%;
+    min-width: 0;
     border: 1.5px solid var(--border-strong);
     border-radius: var(--radius-md);
     padding: 14px 16px;
@@ -309,6 +312,7 @@ body {
     font-size: 1.08rem;
     font-weight: 700;
     color: var(--text-primary);
+    overflow-wrap: anywhere;
 }
 
 .mini-action-btn {
@@ -338,11 +342,13 @@ body {
     font-size: 0.9rem;
     line-height: 1.5;
     color: var(--text-secondary);
+    overflow-wrap: anywhere;
 }
 
 /* Telefone (retângulo menor do wireframe) */
 .company-phone-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 8px;
@@ -766,6 +772,8 @@ body {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
+    max-width: calc(100vw - 24px);
+    text-align: center;
     background: var(--border-strong);
     color: #ffffff;
     padding: 10px 18px;
@@ -774,4 +782,218 @@ body {
     font-weight: 500;
     z-index: 80;
     box-shadow: var(--shadow-md);
+}
+
+/* =========================================================
+   Responsividade: Celular, Tablet e Computador
+   ========================================================= */
+
+/* Celular (telas menores que 480px) */
+@media (max-width: 480px) {
+    body {
+        padding: 8px;
+    }
+
+    .app-shell {
+        border-radius: 16px;
+        padding: 14px 14px 18px;
+        gap: 14px;
+    }
+
+    .brand-box {
+        padding: 7px 12px;
+        font-size: 0.94rem;
+        white-space: nowrap;
+    }
+
+    .company-logo-frame {
+        max-width: 100%;
+    }
+
+    .company-logo-fallback {
+        font-size: 2.4rem;
+    }
+
+    .company-phone-box {
+        flex: 1 1 auto;
+        min-height: 44px;
+        padding: 8px 14px;
+    }
+
+    .copy-phone-btn {
+        min-height: 44px;
+        padding: 9px 14px;
+    }
+
+    .pager-btn {
+        min-height: 42px;
+        padding: 8px 12px;
+    }
+
+    .form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .modal {
+        padding: 10px;
+    }
+
+    .modal-card {
+        padding: 16px;
+        max-height: 92dvh;
+    }
+
+    .form-footer {
+        flex-direction: column-reverse;
+    }
+
+    .form-footer button {
+        width: 100%;
+    }
+}
+
+/* Tablet pequeno (640px+) */
+@media (min-width: 640px) {
+    body {
+        padding: 24px 20px;
+    }
+
+    .app-shell {
+        max-width: 680px;
+        border-radius: 24px;
+        padding: 24px 26px 30px;
+        gap: 20px;
+    }
+
+    .brand-box {
+        padding: 9px 22px;
+        font-size: 1.08rem;
+    }
+
+    .results-strip {
+        flex-wrap: wrap;
+        overflow-x: visible;
+    }
+
+    .modal-card {
+        max-width: 520px;
+        padding: 24px;
+    }
+}
+
+/* Tablet (768px - 1023px): layout em 2 colunas no card da empresa */
+@media (min-width: 768px) {
+    .app-shell {
+        max-width: 840px;
+        padding: 26px 30px 32px;
+    }
+
+    .company-card {
+        display: grid;
+        grid-template-columns: 270px 1fr;
+        grid-template-rows: auto auto auto;
+        align-items: start;
+        gap: 16px 24px;
+    }
+
+    .company-logo-frame {
+        grid-column: 1;
+        grid-row: 1 / span 3;
+        max-width: none;
+        width: 100%;
+    }
+
+    .company-description-box {
+        grid-column: 2;
+        grid-row: 1;
+        padding: 18px 20px;
+    }
+
+    .company-name {
+        font-size: 1.22rem;
+    }
+
+    .company-description {
+        font-size: 0.95rem;
+    }
+
+    .company-phone-row {
+        grid-column: 2;
+        grid-row: 2;
+        justify-content: flex-start;
+    }
+
+    .social-row {
+        grid-column: 2;
+        grid-row: 3;
+        justify-content: flex-start;
+        margin-top: 2px;
+    }
+}
+
+/* Computador / Desktop (1024px+) */
+@media (min-width: 1024px) {
+    body {
+        padding: 36px 28px;
+    }
+
+    .app-shell {
+        max-width: 1040px;
+        padding: 30px 36px 36px;
+        gap: 24px;
+    }
+
+    .brand-box {
+        padding: 10px 26px;
+        font-size: 1.15rem;
+    }
+
+    .search-box {
+        padding: 10px 14px;
+    }
+
+    .company-card {
+        grid-template-columns: 340px 1fr;
+        gap: 18px 30px;
+    }
+
+    .company-description-box {
+        padding: 20px 24px;
+        min-height: 140px;
+    }
+
+    .company-name {
+        font-size: 1.35rem;
+    }
+
+    .company-description {
+        font-size: 0.98rem;
+        line-height: 1.6;
+    }
+
+    .pager-row {
+        padding-top: 12px;
+    }
+
+    .pager-btn {
+        padding: 9px 18px;
+        font-size: 0.9rem;
+    }
+
+    .modal-card {
+        max-width: 560px;
+        padding: 26px;
+    }
+}
+
+/* Telas grandes (1280px+) */
+@media (min-width: 1280px) {
+    .app-shell {
+        max-width: 1120px;
+    }
+
+    .company-card {
+        grid-template-columns: 380px 1fr;
+        gap: 20px 34px;
+    }
 }
