@@ -34,11 +34,11 @@ public class CompanyService {
     public static final Map<String, List<String>> SUBSEGMENTS_BY_CATEGORY;
     static {
         Map<String, List<String>> map = new LinkedHashMap<>();
-        map.put("Mão de Obra", List.of("Reparos & Hidráulica", "Elétrica & Instalações", "Marcenaria & Móveis", "Pintura & Reformas"));
-        map.put("Comércio", List.of("Hortifrúti & Orgânicos", "Informática & Celulares", "Mercearia & Empório", "Papelaria & Utilidades"));
-        map.put("Gastronomia", List.of("Cafeteria & Padaria", "Pizzaria & Massas", "Doceria & Confeitaria", "Marmitas & Caseiros"));
-        map.put("Beleza (Masculina/Feminina)", List.of("Salão Unissex", "Barbearia", "Unhas & Sobrancelhas", "Estética & Cuidados"));
-        map.put("Vestuário", List.of("Moda Local & Ajustes", "Fitness & Esportes", "Jeans & Casual", "Infantil & Acessórios"));
+        map.put("Mão de Obra", List.of("Hidráulica", "Elétrica", "Marcenaria", "Reformas"));
+        map.put("Comércio", List.of("Hortifrúti", "Eletrônicos", "Mercearia", "Papelaria"));
+        map.put("Gastronomia", List.of("Padaria", "Pizzaria", "Lanchonete", "Doceria", "Restaurante"));
+        map.put("Beleza (Masculina/Feminina)", List.of("Salão", "Barbearia", "Manicure", "Estética"));
+        map.put("Vestuário", List.of("Moda", "Fitness", "Casual", "Acessórios"));
         SUBSEGMENTS_BY_CATEGORY = Collections.unmodifiableMap(map);
     }
 
