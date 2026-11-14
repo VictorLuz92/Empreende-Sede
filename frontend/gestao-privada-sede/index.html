@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Painel Administrativo — Empreende Sede</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <!-- Tela de Login Exclusivo do Administrador Único -->
+    <main id="adminLoginScreen" class="admin-login-screen">
+        <div class="login-card">
+            <div class="login-badge">Acesso Restrito</div>
+            <h1>Painel do Administrador</h1>
+            <p class="login-subtitle">Apenas o administrador único do Empreende Sede pode aprovar lojas, validar pagamentos Pix (R$ 50,00/mês) e publicar alterações.</p>
+
+            <div id="adminLoginError" class="alert-error hidden" role="alert"></div>
+
+            <form id="adminLoginForm" class="admin-form">
+                <label>
+                    E-mail do Administrador
+                    <input type="email" id="adminEmailInput" required autocomplete="username" placeholder="admin@empreendesede.com.br">
+                </label>
+                <label>
+                    Senha
+                    <input type="password" id="adminPasswordInput" required autocomplete="current-password" placeholder="••••••••">
+                </label>
+                <button type="submit" class="btn-primary">Entrar no Painel Adm</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Dashboard Administrativo -->
+    <div id="adminDashboard" class="admin-shell hidden">
+        <header class="admin-topbar">
+            <div class="admin-brand">
+                <span class="shield-badge">🛡️</span>
+                <div>
+                    <h1>Empreende Sede — Administração</h1>
+                    <p id="adminIdentityLabel" class="admin-identity">Administrador Único</p>
+                </div>
+            </div>
+            <div class="topbar-actions">
+                <button id="refreshAdminBtn" class="btn-secondary" type="button">↻ Atualizar</button>
+                <button id="adminLogoutBtn" class="btn-danger" type="button">Sair</button>
+            </div>
+        </header>
+
+        <section class="stats-grid" aria-label="Resumo">
+            <div class="stat-card">
+                <span class="stat-label">Pendentes de Aprovação / Pix</span>
+                <strong id="statPendingCount" class="stat-value">0</strong>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Lojas Ativas na Vitrine</span>
+                <strong id="statPublishedCount" class="stat-value">0</strong>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Expiradas / Sem Pagamento</span>
+                <strong id="statExpiredCount" class="stat-value">0</strong>
+            </div>
+        </section>
+
+        <div class="admin-tabs" role="tablist">
+            <button id="tabPendingBtn" class="tab-btn active" type="button" role="tab">
+                ⏳ Aprovações &amp; Pix Pendentes (<span id="tabPendingBadge">0</span>)
+            </button>
+            <button id="tabAllBtn" class="tab-btn" type="button" role="tab">
+                🏪 Todas as Lojas (<span id="tabAllBadge">0</span>)
+            </button>
+        </div>
+
+        <section id="pendingPanel" class="panel-section">
+            <div id="pendingList" class="cards-grid"></div>
+        </section>
+
+        <section id="allStoresPanel" class="panel-section hidden">
+            <div id="allStoresList" class="cards-grid"></div>
+        </section>
+    </div>
+
+    <div id="adminToast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+package com.empreendesede.repository;
+
+import com.empreendesede.model.UserAccount;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public interface UserRepository extends JpaRepository<UserAccount, UUID> {
+    Optional<UserAccount> findByEmailIgnoreCase(String email);
+}

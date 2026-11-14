@@ -44,8 +44,53 @@ public class Company {
     @Column(name = "owner_id")
     private UUID ownerId;
 
+    @Column(name = "owner_email", length = 180)
+    private String ownerEmail;
+
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(nullable = false)
+    private boolean approved = true;
+
+    @Column(name = "payment_status", nullable = false, length = 30)
+    private String paymentStatus = "PAID";
+
+    @Column(name = "pix_tx_id", length = 120)
+    private String pixTxId;
+
+    @Column(name = "pix_payer_note", length = 255)
+    private String pixPayerNote;
+
+    @Column(name = "pending_renewal", nullable = false)
+    private boolean pendingRenewal = false;
+
+    @Column(name = "subscription_expires_at")
+    private OffsetDateTime subscriptionExpiresAt;
+
+    @Column(name = "has_pending_update", nullable = false)
+    private boolean hasPendingUpdate = false;
+
+    @Column(name = "pending_name", length = 150)
+    private String pendingName;
+
+    @Column(name = "pending_category", length = 80)
+    private String pendingCategory;
+
+    @Column(name = "pending_logo_url", columnDefinition = "TEXT")
+    private String pendingLogoUrl;
+
+    @Column(name = "pending_description", columnDefinition = "TEXT")
+    private String pendingDescription;
+
+    @Column(name = "pending_phone", length = 30)
+    private String pendingPhone;
+
+    @Column(name = "pending_whatsapp", length = 30)
+    private String pendingWhatsapp;
+
+    @Column(name = "pending_instagram", length = 120)
+    private String pendingInstagram;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -143,6 +188,126 @@ public class Company {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public boolean isApproved() {
+        return approved;
+    }
+
+    public void setApproved(boolean approved) {
+        this.approved = approved;
+    }
+
+    public String getOwnerEmail() {
+        return ownerEmail;
+    }
+
+    public void setOwnerEmail(String ownerEmail) {
+        this.ownerEmail = ownerEmail;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public String getPixTxId() {
+        return pixTxId;
+    }
+
+    public void setPixTxId(String pixTxId) {
+        this.pixTxId = pixTxId;
+    }
+
+    public String getPixPayerNote() {
+        return pixPayerNote;
+    }
+
+    public void setPixPayerNote(String pixPayerNote) {
+        this.pixPayerNote = pixPayerNote;
+    }
+
+    public boolean isPendingRenewal() {
+        return pendingRenewal;
+    }
+
+    public void setPendingRenewal(boolean pendingRenewal) {
+        this.pendingRenewal = pendingRenewal;
+    }
+
+    public OffsetDateTime getSubscriptionExpiresAt() {
+        return subscriptionExpiresAt;
+    }
+
+    public void setSubscriptionExpiresAt(OffsetDateTime subscriptionExpiresAt) {
+        this.subscriptionExpiresAt = subscriptionExpiresAt;
+    }
+
+    public boolean isHasPendingUpdate() {
+        return hasPendingUpdate;
+    }
+
+    public void setHasPendingUpdate(boolean hasPendingUpdate) {
+        this.hasPendingUpdate = hasPendingUpdate;
+    }
+
+    public String getPendingName() {
+        return pendingName;
+    }
+
+    public void setPendingName(String pendingName) {
+        this.pendingName = pendingName;
+    }
+
+    public String getPendingCategory() {
+        return pendingCategory;
+    }
+
+    public void setPendingCategory(String pendingCategory) {
+        this.pendingCategory = pendingCategory;
+    }
+
+    public String getPendingLogoUrl() {
+        return pendingLogoUrl;
+    }
+
+    public void setPendingLogoUrl(String pendingLogoUrl) {
+        this.pendingLogoUrl = pendingLogoUrl;
+    }
+
+    public String getPendingDescription() {
+        return pendingDescription;
+    }
+
+    public void setPendingDescription(String pendingDescription) {
+        this.pendingDescription = pendingDescription;
+    }
+
+    public String getPendingPhone() {
+        return pendingPhone;
+    }
+
+    public void setPendingPhone(String pendingPhone) {
+        this.pendingPhone = pendingPhone;
+    }
+
+    public String getPendingWhatsapp() {
+        return pendingWhatsapp;
+    }
+
+    public void setPendingWhatsapp(String pendingWhatsapp) {
+        this.pendingWhatsapp = pendingWhatsapp;
+    }
+
+    public String getPendingInstagram() {
+        return pendingInstagram;
+    }
+
+    public void setPendingInstagram(String pendingInstagram) {
+        this.pendingInstagram = pendingInstagram;
     }
 
     public OffsetDateTime getCreatedAt() {

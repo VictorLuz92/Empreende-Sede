@@ -1,4 +1,10 @@
-const API_BASE_URL = window.API_BASE_URL || "http://localhost:8080/api/companies";
+const API_ORIGIN = window.API_ORIGIN || "http://localhost:8080";
+const API_BASE_URL = `${API_ORIGIN}/api/companies`;
+const AUTH_BASE_URL = `${API_ORIGIN}/api/auth`;
+const ADMIN_BASE_URL = `${API_ORIGIN}/api/admin`;
+
+const USER_TOKEN_KEY = "empreende_sede_user_token";
+const USER_INFO_KEY = "empreende_sede_user_info";
 const STORAGE_KEY = "empreende_sede_demo_companies";
 
 const SEED_COMPANIES = [
@@ -10,7 +16,9 @@ const SEED_COMPANIES = [
         description: "Cafeteria especializada em grãos selecionados, pães de fermentação natural e um espaço acolhedor para reuniões e trabalho remoto.",
         phone: "(11) 98765-4321",
         whatsapp: "5511987654321",
-        instagram: "cafeprosa.artesanal"
+        instagram: "cafeprosa.artesanal",
+        approved: true,
+        paymentStatus: "EXEMPT"
     },
     {
         id: "demo-2",
@@ -20,7 +28,9 @@ const SEED_COMPANIES = [
         description: "Desenvolvimento de sistemas sob medida, automação comercial e suporte técnico especializado para pequenos e médios negócios.",
         phone: "(11) 91234-5678",
         whatsapp: "5511912345678",
-        instagram: "sedetech.oficial"
+        instagram: "sedetech.oficial",
+        approved: true,
+        paymentStatus: "EXEMPT"
     },
     {
         id: "demo-3",
@@ -30,7 +40,9 @@ const SEED_COMPANIES = [
         description: "Identidade visual, gestão de redes sociais e fotografia comercial para impulsionar marcas locais com criatividade.",
         phone: "(11) 99887-7665",
         whatsapp: "5511998877665",
-        instagram: "estudioraiz.design"
+        instagram: "estudioraiz.design",
+        approved: true,
+        paymentStatus: "EXEMPT"
     },
     {
         id: "demo-4",
@@ -40,7 +52,9 @@ const SEED_COMPANIES = [
         description: "Produtos orgânicos frescos direto do produtor, cestas semanais por assinatura e entregas rápidas na região.",
         phone: "(11) 97766-5544",
         whatsapp: "5511977665544",
-        instagram: "verdevida.organicos"
+        instagram: "verdevida.organicos",
+        approved: true,
+        paymentStatus: "EXEMPT"
     }
 ];
 
@@ -57,9 +71,124 @@ function loadDemoCompanies() {
     }
 }
 
-function saveDemoCompanies(list) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+async function parseError(response, fallbackMsg) {
+    try {
+        const body = await response.json();
+        if (body?.fields) {
+            const first = Object.values(body.fields)[0];
+            if (first) return String(first);
+        }
+        if (body?.error) return String(body.error);
+    } catch {
+        // ignore parse failure
+    }
+    return fallbackMsg;
 }
+
+const AuthApi = {
+    getToken() {
+        return localStorage.getItem(USER_TOKEN_KEY) || "";
+    },
+
+    getUser() {
+        try {
+            const raw = localStorage.getItem(USER_INFO_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    },
+
+    saveSession(authResp) {
+        localStorage.setItem(USER_TOKEN_KEY, authResp.token);
+        localStorage.setItem(USER_INFO_KEY, JSON.stringify(authResp.user));
+    },
+
+    clearSession() {
+        localStorage.removeItem(USER_TOKEN_KEY);
+        localStorage.removeItem(USER_INFO_KEY);
+    },
+
+    authHeaders(extra = {}) {
+        const token = this.getToken();
+        return token
+            ? { ...extra, Authorization: `Bearer ${token}` }
+            : { ...extra };
+    },
+
+    async getProviders() {
+        const response = await fetch(`${AUTH_BASE_URL}/providers`);
+        if (!response.ok) throw new Error("Não foi possível carregar configurações de autenticação.");
+        return await response.json();
+    },
+
+    async register(payload) {
+        const response = await fetch(`${AUTH_BASE_URL}/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao criar conta."));
+        const data = await response.json();
+        this.saveSession(data);
+        return data;
+    },
+
+    async login(payload) {
+        const response = await fetch(`${AUTH_BASE_URL}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao fazer login."));
+        const data = await response.json();
+        this.saveSession(data);
+        return data;
+    },
+
+    async loginWithGoogle(idToken) {
+        const response = await fetch(`${AUTH_BASE_URL}/oauth/google`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: idToken })
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha na autenticação com Google."));
+        const data = await response.json();
+        this.saveSession(data);
+        return data;
+    },
+
+    async loginWithMicrosoft(accessToken) {
+        const response = await fetch(`${AUTH_BASE_URL}/oauth/microsoft`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: accessToken })
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha na autenticação com Microsoft."));
+        const data = await response.json();
+        this.saveSession(data);
+        return data;
+    },
+
+    async verifySession() {
+        const token = this.getToken();
+        if (!token) return null;
+        try {
+            const response = await fetch(`${AUTH_BASE_URL}/me`, {
+                headers: this.authHeaders()
+            });
+            if (!response.ok) {
+                this.clearSession();
+                return null;
+            }
+            const user = await response.json();
+            localStorage.setItem(USER_INFO_KEY, JSON.stringify(user));
+            return user;
+        } catch {
+            return this.getUser();
+        }
+    }
+};
 
 const CompanyApi = {
     isDemoMode: false,
@@ -104,69 +233,41 @@ const CompanyApi = {
         }
     },
 
+    async listMine() {
+        const response = await fetch(`${API_BASE_URL}/mine`, {
+            headers: AuthApi.authHeaders()
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao carregar suas lojas."));
+        return await response.json();
+    },
+
     async create(payload) {
-        try {
-            const response = await fetch(API_BASE_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error("Falha ao cadastrar empresa");
-            this.isDemoMode = false;
-            return await response.json();
-        } catch (err) {
-            if (!this.isDemoMode) throw err;
-            const list = loadDemoCompanies();
-            const created = {
-                ...payload,
-                id: `demo-${Date.now()}`,
-                whatsapp: (payload.whatsapp || "").replace(/\D/g, "") || null,
-                instagram: (payload.instagram || "").replace(/^@/, "") || null
-            };
-            list.push(created);
-            saveDemoCompanies(list);
-            return created;
-        }
+        const response = await fetch(API_BASE_URL, {
+            method: "POST",
+            headers: AuthApi.authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao cadastrar loja."));
+        return await response.json();
     },
 
     async update(id, payload) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error("Falha ao atualizar empresa");
-            this.isDemoMode = false;
-            return await response.json();
-        } catch (err) {
-            if (!this.isDemoMode) throw err;
-            const list = loadDemoCompanies();
-            const index = list.findIndex((c) => c.id === id);
-            if (index === -1) throw new Error("Empresa não encontrada");
-            const updated = {
-                ...list[index],
-                ...payload,
-                whatsapp: (payload.whatsapp || "").replace(/\D/g, "") || null,
-                instagram: (payload.instagram || "").replace(/^@/, "") || null
-            };
-            list[index] = updated;
-            saveDemoCompanies(list);
-            return updated;
-        }
+        const response = await fetch(`${API_BASE_URL}/${id}`, {
+            method: "PUT",
+            headers: AuthApi.authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao enviar edição da loja."));
+        return await response.json();
     },
 
-    async remove(id) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/${id}`, {
-                method: "DELETE"
-            });
-            if (!response.ok) throw new Error("Falha ao remover empresa");
-            this.isDemoMode = false;
-        } catch (err) {
-            if (!this.isDemoMode) throw err;
-            const list = loadDemoCompanies().filter((c) => c.id !== id);
-            saveDemoCompanies(list);
-        }
+    async submitPixProof(id, payload) {
+        const response = await fetch(`${API_BASE_URL}/${id}/pix-proof`, {
+            method: "POST",
+            headers: AuthApi.authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao enviar comprovante Pix."));
+        return await response.json();
     }
 };

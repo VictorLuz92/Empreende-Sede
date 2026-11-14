@@ -1,10 +1,25 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const MAX_LOGO_SIZE_KB = 300;
+    const MAX_LOGO_SIZE_BYTES = MAX_LOGO_SIZE_KB * 1024;
+
     const state = {
         companies: [],
         categories: [],
+        myStores: [],
         currentIndex: 0,
         searchQuery: "",
-        selectedCategory: ""
+        selectedCategory: "",
+        user: AuthApi.getUser(),
+        providers: {
+            googleEnabled: false,
+            googleClientId: "",
+            microsoftEnabled: false,
+            microsoftClientId: "",
+            pixKey: "",
+            pixMonthlyAmount: "50.00",
+            pixDurationDays: 30
+        },
+        pendingActionAfterAuth: null
     };
 
     const el = {
@@ -13,7 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
         menuDrawer: document.getElementById("menuDrawer"),
         drawerBackdrop: document.getElementById("drawerBackdrop"),
         logoBtn: document.getElementById("logoBtn"),
+        headerAuthBtn: document.getElementById("headerAuthBtn"),
         profileBtn: document.getElementById("profileBtn"),
+        headerUserAvatarImg: document.getElementById("headerUserAvatarImg"),
+        headerUserDefaultIcon: document.getElementById("headerUserDefaultIcon"),
         connectionBanner: document.getElementById("connectionBanner"),
 
         searchInput: document.getElementById("searchInput"),
@@ -36,6 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
         companyCategoryBadge: document.getElementById("companyCategoryBadge"),
         companyName: document.getElementById("companyName"),
         companyDescription: document.getElementById("companyDescription"),
+        companyPendingNotice: document.getElementById("companyPendingNotice"),
         companyPhoneLink: document.getElementById("companyPhoneLink"),
         companyPhoneText: document.getElementById("companyPhoneText"),
         copyPhoneBtn: document.getElementById("copyPhoneBtn"),
@@ -44,22 +63,68 @@ document.addEventListener("DOMContentLoaded", () => {
         editCompanyBtn: document.getElementById("editCompanyBtn"),
 
         newCompanyMenuBtn: document.getElementById("newCompanyMenuBtn"),
-        profileModal: document.getElementById("profileModal"),
-        openCreateFromProfileBtn: document.getElementById("openCreateFromProfileBtn"),
-        openEditFromProfileBtn: document.getElementById("openEditFromProfileBtn"),
-        deleteCurrentCompanyBtn: document.getElementById("deleteCurrentCompanyBtn"),
 
+        // Auth Modal
+        authModal: document.getElementById("authModal"),
+        googleLoginBtn: document.getElementById("googleLoginBtn"),
+        microsoftLoginBtn: document.getElementById("microsoftLoginBtn"),
+        googleButtonContainer: document.getElementById("googleButtonContainer"),
+        authTabLogin: document.getElementById("authTabLogin"),
+        authTabRegister: document.getElementById("authTabRegister"),
+        authErrorBox: document.getElementById("authErrorBox"),
+        loginForm: document.getElementById("loginForm"),
+        loginEmail: document.getElementById("loginEmail"),
+        loginPassword: document.getElementById("loginPassword"),
+        registerForm: document.getElementById("registerForm"),
+        registerName: document.getElementById("registerName"),
+        registerEmail: document.getElementById("registerEmail"),
+        registerPassword: document.getElementById("registerPassword"),
+
+        // Profile / My Stores Modal
+        profileModal: document.getElementById("profileModal"),
+        profileAvatarImg: document.getElementById("profileAvatarImg"),
+        profileAvatarInitials: document.getElementById("profileAvatarInitials"),
+        profileName: document.getElementById("profileName"),
+        profileEmail: document.getElementById("profileEmail"),
+        openCreateFromProfileBtn: document.getElementById("openCreateFromProfileBtn"),
+        logoutBtn: document.getElementById("logoutBtn"),
+        myStoresCountLabel: document.getElementById("myStoresCountLabel"),
+        myStoresList: document.getElementById("myStoresList"),
+
+        // Company Form Modal
         companyFormModal: document.getElementById("companyFormModal"),
         formModalTitle: document.getElementById("formModalTitle"),
         companyForm: document.getElementById("companyForm"),
         formCompanyId: document.getElementById("formCompanyId"),
+        formLogoData: document.getElementById("formLogoData"),
+        formLogoFile: document.getElementById("formLogoFile"),
+        logoFileName: document.getElementById("logoFileName"),
+        logoUploadError: document.getElementById("logoUploadError"),
+        logoUploadPreviewBox: document.getElementById("logoUploadPreviewBox"),
+        formLogoPreviewImg: document.getElementById("formLogoPreviewImg"),
+        formLogoAvatarPreviewImg: document.getElementById("formLogoAvatarPreviewImg"),
+        removeLogoBtn: document.getElementById("removeLogoBtn"),
         formName: document.getElementById("formName"),
         formCategory: document.getElementById("formCategory"),
-        formLogoUrl: document.getElementById("formLogoUrl"),
         formDescription: document.getElementById("formDescription"),
         formPhone: document.getElementById("formPhone"),
         formWhatsapp: document.getElementById("formWhatsapp"),
         formInstagram: document.getElementById("formInstagram"),
+        formApprovalNotice: document.getElementById("formApprovalNotice"),
+        formSubmitBtn: document.getElementById("formSubmitBtn"),
+
+        // Pix Modal
+        pixModal: document.getElementById("pixModal"),
+        pixStoreNameLabel: document.getElementById("pixStoreNameLabel"),
+        pixQrCanvasWrap: document.getElementById("pixQrCanvasWrap"),
+        pixKeyDisplay: document.getElementById("pixKeyDisplay"),
+        pixCopiaColaText: document.getElementById("pixCopiaColaText"),
+        copyPixCodeBtn: document.getElementById("copyPixCodeBtn"),
+        pixProofForm: document.getElementById("pixProofForm"),
+        pixCompanyId: document.getElementById("pixCompanyId"),
+        pixIsRenewal: document.getElementById("pixIsRenewal"),
+        pixTxIdInput: document.getElementById("pixTxIdInput"),
+        pixPayerNoteInput: document.getElementById("pixPayerNoteInput"),
 
         toast: document.getElementById("toast")
     };
@@ -73,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => {
             el.toast.classList.add("hidden");
-        }, 2600);
+        }, 3400);
     }
 
     function openDrawer() {
@@ -104,9 +169,106 @@ document.addEventListener("DOMContentLoaded", () => {
         return (parts[0][0] + parts[1][0]).toUpperCase();
     }
 
+    function showAuthError(msg) {
+        if (!msg) {
+            el.authErrorBox.classList.add("hidden");
+            el.authErrorBox.textContent = "";
+            return;
+        }
+        el.authErrorBox.textContent = msg;
+        el.authErrorBox.classList.remove("hidden");
+    }
+
+    function switchAuthTab(mode) {
+        showAuthError("");
+        const isLogin = mode === "login";
+        el.authTabLogin.classList.toggle("active", isLogin);
+        el.authTabLogin.setAttribute("aria-selected", String(isLogin));
+        el.authTabRegister.classList.toggle("active", !isLogin);
+        el.authTabRegister.setAttribute("aria-selected", String(!isLogin));
+        el.loginForm.classList.toggle("hidden", !isLogin);
+        el.registerForm.classList.toggle("hidden", isLogin);
+    }
+
+    function openAuthModal(afterAuthCallback = null) {
+        state.pendingActionAfterAuth = afterAuthCallback;
+        switchAuthTab("login");
+        openModal(el.authModal);
+    }
+
+    async function onAuthenticated(authResponse) {
+        state.user = authResponse.user;
+        closeModal(el.authModal);
+        showToast(`Bem-vindo(a), ${state.user.name}!`);
+        await refreshMyStores();
+        renderUserSessionUI();
+
+        if (typeof state.pendingActionAfterAuth === "function") {
+            const cb = state.pendingActionAfterAuth;
+            state.pendingActionAfterAuth = null;
+            cb();
+        }
+    }
+
+    function renderUserSessionUI() {
+        const isLogged = Boolean(state.user && AuthApi.getToken());
+        if (isLogged) {
+            const firstName = (state.user.name || "Conta").split(/\s+/)[0];
+            el.headerAuthBtn.textContent = `👤 ${firstName}`;
+            el.headerAuthBtn.classList.add("is-logged");
+            el.profileName.textContent = state.user.name;
+            el.profileEmail.textContent = state.user.email;
+        } else {
+            el.headerAuthBtn.textContent = "Entrar";
+            el.headerAuthBtn.classList.remove("is-logged");
+        }
+
+        const currentCompany = state.companies[state.currentIndex];
+        const canEditCurrent = isLogged && currentCompany && currentCompany.ownerId === state.user.id;
+        el.editCompanyBtn.classList.toggle("hidden", !canEditCurrent);
+
+        if (currentCompany && currentCompany.hasPendingUpdate && canEditCurrent) {
+            el.companyPendingNotice.classList.remove("hidden");
+        } else {
+            el.companyPendingNotice.classList.add("hidden");
+        }
+    }
+
+    function syncUserPhoto(company) {
+        const ownedStore = state.myStores.find((s) => s.logoUrl) || company;
+        const logoUrl = company?.logoUrl || ownedStore?.logoUrl || "";
+        const initials = getInitials(state.user?.name || company?.name || "ES");
+        el.profileAvatarInitials.textContent = initials;
+
+        if (logoUrl) {
+            el.headerUserAvatarImg.src = logoUrl;
+            el.headerUserAvatarImg.alt = `Foto de ${company?.name || "usuário"}`;
+            el.headerUserAvatarImg.classList.remove("hidden");
+            el.headerUserDefaultIcon.classList.add("hidden");
+            el.headerUserAvatarImg.onerror = () => {
+                el.headerUserAvatarImg.classList.add("hidden");
+                el.headerUserDefaultIcon.classList.remove("hidden");
+            };
+
+            el.profileAvatarImg.src = logoUrl;
+            el.profileAvatarImg.alt = `Foto de ${company?.name || "usuário"}`;
+            el.profileAvatarImg.classList.remove("hidden");
+            el.profileAvatarInitials.classList.add("hidden");
+            el.profileAvatarImg.onerror = () => {
+                el.profileAvatarImg.classList.add("hidden");
+                el.profileAvatarInitials.classList.remove("hidden");
+            };
+        } else {
+            el.headerUserAvatarImg.classList.add("hidden");
+            el.headerUserDefaultIcon.classList.remove("hidden");
+            el.profileAvatarImg.classList.add("hidden");
+            el.profileAvatarInitials.classList.remove("hidden");
+        }
+    }
+
     function renderConnectionBanner() {
         if (CompanyApi.isDemoMode) {
-            el.connectionBanner.textContent = "Modo demonstração offline (inicie a API Spring Boot na porta 8080 para sincronizar com o banco).";
+            el.connectionBanner.textContent = "Modo demonstração offline (inicie a API Spring Boot na porta 8080 para login, Pix e banco de dados).";
             el.connectionBanner.classList.remove("hidden");
         } else {
             el.connectionBanner.classList.add("hidden");
@@ -159,6 +321,8 @@ document.addEventListener("DOMContentLoaded", () => {
             el.companyCard.classList.add("hidden");
             el.pagerRow.classList.add("hidden");
             el.emptyState.classList.remove("hidden");
+            syncUserPhoto(null);
+            renderUserSessionUI();
             return;
         }
 
@@ -191,6 +355,9 @@ document.addEventListener("DOMContentLoaded", () => {
             el.companyLogoFallback.classList.remove("hidden");
         }
 
+        syncUserPhoto(company);
+        renderUserSessionUI();
+
         const phoneDigits = (company.phone || "").replace(/\D/g, "");
         el.companyPhoneText.textContent = company.phone || "Não informado";
         el.companyPhoneLink.href = phoneDigits ? `tel:${phoneDigits}` : "#";
@@ -219,6 +386,169 @@ document.addEventListener("DOMContentLoaded", () => {
         el.nextCompanyBtn.disabled = state.currentIndex === state.companies.length - 1;
     }
 
+    function formatPaymentBadge(store) {
+        if (store.paymentStatus === "PENDING_PAYMENT") {
+            return { text: "Aguardando Pix R$ 50,00", cls: "status-warn" };
+        }
+        if (store.paymentStatus === "PAYMENT_SUBMITTED") {
+            return { text: "Pix enviado • Aguardando Adm", cls: "status-info" };
+        }
+        if (store.expired || store.paymentStatus === "EXPIRED") {
+            return { text: "Plano expirado • Renovar R$ 50,00", cls: "status-danger" };
+        }
+        if (!store.approved) {
+            return { text: "Aguardando aprovação do Adm", cls: "status-info" };
+        }
+        if (store.hasPendingUpdate) {
+            return { text: "Edição aguardando Adm", cls: "status-info" };
+        }
+        if (store.daysRemaining != null) {
+            return { text: `Ativa • ${store.daysRemaining} dia(s) restantes`, cls: "status-ok" };
+        }
+        return { text: "Ativa na vitrine", cls: "status-ok" };
+    }
+
+    function renderMyStores() {
+        const count = state.myStores.length;
+        el.myStoresCountLabel.textContent = count === 1 ? "1 loja" : `${count} lojas`;
+        el.myStoresList.innerHTML = "";
+
+        if (count === 0) {
+            const p = document.createElement("p");
+            p.className = "empty-pending-msg";
+            p.textContent = "Você ainda não cadastrou nenhuma loja. Clique acima para começar por R$ 50,00/mês.";
+            el.myStoresList.appendChild(p);
+            return;
+        }
+
+        state.myStores.forEach((store) => {
+            const status = formatPaymentBadge(store);
+            const card = document.createElement("div");
+            card.className = "pending-item-card";
+
+            const header = document.createElement("div");
+            header.className = "pending-item-header";
+            const badge = document.createElement("span");
+            badge.className = `status-pill ${status.cls}`;
+            badge.textContent = status.text;
+            const title = document.createElement("strong");
+            title.textContent = store.name;
+            header.appendChild(title);
+            header.appendChild(badge);
+
+            const body = document.createElement("div");
+            body.className = "pending-item-body";
+            if (store.logoUrl) {
+                const img = document.createElement("img");
+                img.src = store.logoUrl;
+                img.alt = store.name;
+                img.className = "pending-thumb-img";
+                body.appendChild(img);
+            }
+
+            const details = document.createElement("div");
+            details.className = "pending-item-details";
+            const catP = document.createElement("p");
+            catP.textContent = `${store.category} • ${store.phone}`;
+            details.appendChild(catP);
+
+            if (store.subscriptionExpiresAt) {
+                const expDate = new Date(store.subscriptionExpiresAt).toLocaleDateString("pt-BR");
+                const expP = document.createElement("p");
+                expP.textContent = `Divulgação válida até: ${expDate}`;
+                details.appendChild(expP);
+            }
+            body.appendChild(details);
+
+            const actions = document.createElement("div");
+            actions.className = "pending-item-actions";
+
+            if (store.paymentStatus === "PENDING_PAYMENT") {
+                const payBtn = document.createElement("button");
+                payBtn.type = "button";
+                payBtn.className = "btn-approve";
+                payBtn.textContent = "💳 Pagar Pix R$ 50,00";
+                payBtn.addEventListener("click", () => {
+                    closeModal(el.profileModal);
+                    openPixModal(store, false);
+                });
+                actions.appendChild(payBtn);
+            } else if (store.expired || store.paymentStatus === "PAID") {
+                const renewBtn = document.createElement("button");
+                renewBtn.type = "button";
+                renewBtn.className = "btn-secondary btn-sm";
+                renewBtn.textContent = "🔄 Renovar +1 mês (R$ 50)";
+                renewBtn.addEventListener("click", () => {
+                    closeModal(el.profileModal);
+                    openPixModal(store, true);
+                });
+                actions.appendChild(renewBtn);
+            }
+
+            const editBtn = document.createElement("button");
+            editBtn.type = "button";
+            editBtn.className = "btn-secondary btn-sm";
+            editBtn.textContent = "✏️ Editar";
+            editBtn.addEventListener("click", () => {
+                closeModal(el.profileModal);
+                openCompanyForm(store);
+            });
+            actions.appendChild(editBtn);
+
+            card.appendChild(header);
+            card.appendChild(body);
+            card.appendChild(actions);
+            el.myStoresList.appendChild(card);
+        });
+    }
+
+    async function refreshMyStores() {
+        if (!state.user || !AuthApi.getToken()) {
+            state.myStores = [];
+            return;
+        }
+        try {
+            state.myStores = await CompanyApi.listMine();
+            renderMyStores();
+        } catch {
+            state.myStores = [];
+        }
+    }
+
+    function openPixModal(store, isRenewal = false) {
+        el.pixCompanyId.value = store.id;
+        el.pixIsRenewal.value = String(Boolean(isRenewal));
+        el.pixStoreNameLabel.textContent = isRenewal ? `Renovação (+1 mês): ${store.name}` : `Publicar loja: ${store.name}`;
+        el.pixKeyDisplay.textContent = state.providers.pixKey || "Chave Pix não configurada";
+        el.pixCopiaColaText.value = store.pixCode || "";
+        el.pixTxIdInput.value = "";
+        el.pixPayerNoteInput.value = "";
+
+        el.pixQrCanvasWrap.innerHTML = "";
+        if (store.pixCode && typeof window.qrcode === "function") {
+            try {
+                const qr = window.qrcode(0, "M");
+                qr.addData(store.pixCode);
+                qr.make();
+                el.pixQrCanvasWrap.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+            } catch {
+                el.pixQrCanvasWrap.textContent = "Use o código Pix Copia e Cola ao lado.";
+            }
+        } else {
+            el.pixQrCanvasWrap.textContent = "Use o código Pix Copia e Cola ao lado.";
+        }
+
+        openModal(el.pixModal);
+    }
+
+    async function loadProviders() {
+        try {
+            state.providers = await AuthApi.getProviders();
+        } catch {
+            // fallback defaults already in state
+        }
+    }
+
     async function loadCompanies(keepId = null) {
         el.loadingState.classList.remove("hidden");
         el.companyCard.classList.add("hidden");
@@ -236,7 +566,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (keepId) {
                 const foundIndex = companies.findIndex((c) => c.id === keepId);
                 state.currentIndex = foundIndex >= 0 ? foundIndex : 0;
-            } else {
+            } else if (state.currentIndex >= companies.length) {
                 state.currentIndex = 0;
             }
 
@@ -249,24 +579,221 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    function openCompanyForm(company = null) {
-        if (company) {
-            el.formModalTitle.textContent = "Editar Empresa";
-            el.formCompanyId.value = company.id;
-            el.formName.value = company.name || "";
-            el.formCategory.value = company.category || "";
-            el.formLogoUrl.value = company.logoUrl || "";
-            el.formDescription.value = company.description || "";
-            el.formPhone.value = company.phone || "";
-            el.formWhatsapp.value = company.whatsapp || "";
-            el.formInstagram.value = company.instagram || "";
+    function updateFormLogoPreview(dataUrl, labelText = "") {
+        el.formLogoData.value = dataUrl || "";
+        el.logoUploadError.classList.add("hidden");
+        el.logoUploadError.textContent = "";
+
+        if (dataUrl) {
+            el.formLogoPreviewImg.src = dataUrl;
+            el.formLogoAvatarPreviewImg.src = dataUrl;
+            el.logoUploadPreviewBox.classList.remove("hidden");
+            el.logoFileName.textContent = labelText || "Imagem atual carregada";
         } else {
-            el.formModalTitle.textContent = "Cadastrar Empresa";
+            el.formLogoPreviewImg.src = "";
+            el.formLogoAvatarPreviewImg.src = "";
+            el.logoUploadPreviewBox.classList.add("hidden");
+            el.logoFileName.textContent = "Nenhum arquivo selecionado";
+        }
+    }
+
+    function openCompanyForm(company = null) {
+        if (!state.user || !AuthApi.getToken()) {
+            openAuthModal(() => openCompanyForm(company));
+            return;
+        }
+
+        el.formLogoFile.value = "";
+        el.logoUploadError.classList.add("hidden");
+
+        if (company) {
+            const source = company.hasPendingUpdate && company.pendingData ? company.pendingData : company;
+            el.formModalTitle.textContent = "Editar Minha Loja";
+            el.formCompanyId.value = company.id;
+            el.formName.value = source.name || "";
+            el.formCategory.value = source.category || "";
+            el.formDescription.value = source.description || "";
+            el.formPhone.value = source.phone || "";
+            el.formWhatsapp.value = source.whatsapp || "";
+            el.formInstagram.value = source.instagram || "";
+            el.formApprovalNotice.innerHTML = "ℹ️ As modificações enviadas ficam pendentes até a <strong>aprovação do Administrador</strong>.";
+            el.formSubmitBtn.textContent = "Enviar Edição para o Adm";
+            updateFormLogoPreview(source.logoUrl || "", source.logoUrl ? "Logo atual da empresa" : "");
+        } else {
+            el.formModalTitle.textContent = "Cadastrar Nova Loja";
             el.companyForm.reset();
             el.formCompanyId.value = "";
+            el.formApprovalNotice.innerHTML = "💳 <strong>Taxa de divulgação: R$ 50,00 no Pix</strong> (direito a 1 mês na vitrine). Sua loja entra no ar após pagamento e aprovação do Administrador.";
+            el.formSubmitBtn.textContent = "Continuar para Pix (R$ 50,00)";
+            updateFormLogoPreview("", "");
         }
         openModal(el.companyFormModal);
     }
+
+    // Upload de imagem da Logo com validação de tamanho máximo (300 KB) e leitura de resolução
+    el.formLogoFile.addEventListener("change", () => {
+        const file = el.formLogoFile.files?.[0];
+        if (!file) return;
+
+        const validTypes = ["image/jpeg", "image/png", "image/webp"];
+        if (!validTypes.includes(file.type)) {
+            el.logoUploadError.textContent = "Formato inválido. Selecione uma imagem JPG, PNG ou WebP.";
+            el.logoUploadError.classList.remove("hidden");
+            el.formLogoFile.value = "";
+            return;
+        }
+
+        const sizeKB = (file.size / 1024).toFixed(1);
+        if (file.size > MAX_LOGO_SIZE_BYTES) {
+            el.logoUploadError.innerHTML =
+                `⚠️ O arquivo selecionado tem <strong>${sizeKB} KB</strong>, mas o tamanho máximo permitido é de <strong>${MAX_LOGO_SIZE_KB} KB</strong>. ` +
+                `Comprima a imagem no <a href="https://squoosh.app/" target="_blank" rel="noopener noreferrer">Squoosh</a>, ` +
+                `<a href="https://tinypng.com/" target="_blank" rel="noopener noreferrer">TinyPNG</a> ou ` +
+                `<a href="https://www.iloveimg.com/pt/comprimir-imagem" target="_blank" rel="noopener noreferrer">iLoveIMG</a> e tente novamente.`;
+            el.logoUploadError.classList.remove("hidden");
+            el.formLogoFile.value = "";
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = reader.result;
+            const probe = new Image();
+            probe.onload = () => {
+                const info = `${file.name} (${sizeKB} KB • ${probe.width}×${probe.height} px)`;
+                updateFormLogoPreview(dataUrl, info);
+            };
+            probe.onerror = () => {
+                updateFormLogoPreview(dataUrl, `${file.name} (${sizeKB} KB)`);
+            };
+            probe.src = dataUrl;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    el.removeLogoBtn.addEventListener("click", () => {
+        el.formLogoFile.value = "";
+        updateFormLogoPreview("", "");
+    });
+
+    // Autenticação: Abas Login / Registro e OAuth Google / Microsoft
+    el.authTabLogin.addEventListener("click", () => switchAuthTab("login"));
+    el.authTabRegister.addEventListener("click", () => switchAuthTab("register"));
+
+    el.loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        showAuthError("");
+        try {
+            const resp = await AuthApi.login({
+                email: el.loginEmail.value.trim(),
+                password: el.loginPassword.value
+            });
+            await onAuthenticated(resp);
+        } catch (err) {
+            showAuthError(err.message);
+        }
+    });
+
+    el.registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        showAuthError("");
+        try {
+            const resp = await AuthApi.register({
+                name: el.registerName.value.trim(),
+                email: el.registerEmail.value.trim(),
+                password: el.registerPassword.value
+            });
+            await onAuthenticated(resp);
+        } catch (err) {
+            showAuthError(err.message);
+        }
+    });
+
+    function loadScriptOnce(src) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) {
+                resolve();
+                return;
+            }
+            const s = document.createElement("script");
+            s.src = src;
+            s.async = true;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
+    el.googleLoginBtn.addEventListener("click", async () => {
+        showAuthError("");
+        if (!state.providers.googleEnabled || !state.providers.googleClientId) {
+            showAuthError("Login com Google (Gmail) requer GOOGLE_CLIENT_ID configurado no backend. Por enquanto, você pode criar sua conta usando seu @gmail.com logo abaixo.");
+            return;
+        }
+        try {
+            await loadScriptOnce("https://accounts.google.com/gsi/client");
+            window.google.accounts.id.initialize({
+                client_id: state.providers.googleClientId,
+                callback: async (response) => {
+                    try {
+                        const authResp = await AuthApi.loginWithGoogle(response.credential);
+                        await onAuthenticated(authResp);
+                    } catch (err) {
+                        showAuthError(err.message);
+                    }
+                }
+            });
+            el.googleButtonContainer.classList.remove("hidden");
+            window.google.accounts.id.renderButton(el.googleButtonContainer, {
+                theme: "outline",
+                size: "large",
+                width: "100%"
+            });
+            window.google.accounts.id.prompt();
+        } catch {
+            showAuthError("Não foi possível carregar o login do Google.");
+        }
+    });
+
+    el.microsoftLoginBtn.addEventListener("click", () => {
+        showAuthError("");
+        if (!state.providers.microsoftEnabled || !state.providers.microsoftClientId) {
+            showAuthError("Login com Microsoft (Outlook) requer MICROSOFT_CLIENT_ID configurado no backend. Por enquanto, você pode criar sua conta usando seu @outlook.com logo abaixo.");
+            return;
+        }
+        const redirectUri = window.location.origin + window.location.pathname;
+        const authUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+            + `?client_id=${encodeURIComponent(state.providers.microsoftClientId)}`
+            + "&response_type=token"
+            + `&redirect_uri=${encodeURIComponent(redirectUri)}`
+            + `&scope=${encodeURIComponent("User.Read openid email profile")}`;
+
+        const popup = window.open(authUrl, "ms_oauth", "width=500,height=620");
+        if (!popup) {
+            showAuthError("Habilite pop-ups no navegador para entrar com a Microsoft.");
+            return;
+        }
+        const timer = setInterval(async () => {
+            try {
+                if (popup.closed) {
+                    clearInterval(timer);
+                    return;
+                }
+                if (popup.location.origin === window.location.origin && popup.location.hash.includes("access_token=")) {
+                    const hashParams = new URLSearchParams(popup.location.hash.substring(1));
+                    const accessToken = hashParams.get("access_token");
+                    popup.close();
+                    clearInterval(timer);
+                    if (accessToken) {
+                        const authResp = await AuthApi.loginWithMicrosoft(accessToken);
+                        await onAuthenticated(authResp);
+                    }
+                }
+            } catch {
+                // cross-origin while user is still on login.microsoftonline.com
+            }
+        }, 400);
+    });
 
     // Eventos de navegação e busca
     el.menuBtn.addEventListener("click", openDrawer);
@@ -331,8 +858,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Modais
-    el.profileBtn.addEventListener("click", () => openModal(el.profileModal));
+    async function handleOpenAccountOrAuth() {
+        if (!state.user || !AuthApi.getToken()) {
+            openAuthModal(async () => {
+                await refreshMyStores();
+                openModal(el.profileModal);
+            });
+            return;
+        }
+        await refreshMyStores();
+        renderUserSessionUI();
+        openModal(el.profileModal);
+    }
+
+    el.headerAuthBtn.addEventListener("click", handleOpenAccountOrAuth);
+    el.profileBtn.addEventListener("click", handleOpenAccountOrAuth);
+
+    el.logoutBtn.addEventListener("click", () => {
+        AuthApi.clearSession();
+        state.user = null;
+        state.myStores = [];
+        closeModal(el.profileModal);
+        renderUserSessionUI();
+        syncUserPhoto(state.companies[state.currentIndex] || null);
+        showToast("Você saiu da conta.");
+    });
 
     document.querySelectorAll("[data-close-modal]").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -341,7 +891,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    [el.profileModal, el.companyFormModal].forEach((modal) => {
+    [el.authModal, el.profileModal, el.companyFormModal, el.pixModal].forEach((modal) => {
         modal.addEventListener("click", (e) => {
             if (e.target === modal) closeModal(modal);
         });
@@ -362,34 +912,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (current) openCompanyForm(current);
     });
 
-    el.openEditFromProfileBtn.addEventListener("click", () => {
-        closeModal(el.profileModal);
-        const current = state.companies[state.currentIndex];
-        if (current) openCompanyForm(current);
-    });
-
-    el.deleteCurrentCompanyBtn.addEventListener("click", async () => {
-        const current = state.companies[state.currentIndex];
-        if (!current) return;
-        if (!confirm(`Deseja remover "${current.name}" da vitrine?`)) return;
-
-        try {
-            await CompanyApi.remove(current.id);
-            closeModal(el.profileModal);
-            showToast("Empresa removida.");
-            await loadCompanies();
-        } catch {
-            showToast("Erro ao remover empresa.");
-        }
-    });
-
     el.companyForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const id = el.formCompanyId.value.trim();
         const payload = {
             name: el.formName.value.trim(),
             category: el.formCategory.value.trim(),
-            logoUrl: el.formLogoUrl.value.trim(),
+            logoUrl: el.formLogoData.value.trim() || null,
             description: el.formDescription.value.trim(),
             phone: el.formPhone.value.trim(),
             whatsapp: el.formWhatsapp.value.trim(),
@@ -402,13 +931,57 @@ document.addEventListener("DOMContentLoaded", () => {
                 : await CompanyApi.create(payload);
 
             closeModal(el.companyFormModal);
-            showToast(id ? "Empresa atualizada!" : "Empresa cadastrada!");
-            await loadCompanies(saved.id);
+            await refreshMyStores();
+
+            if (id) {
+                showToast("Modificações enviadas! Aguardando aprovação do Administrador.");
+                await loadCompanies(saved.id);
+            } else {
+                showToast("Loja pré-cadastrada! Realize o Pix de R$ 50,00 para aprovação.");
+                openPixModal(saved, false);
+            }
+        } catch (err) {
+            showToast(err.message || "Erro ao salvar empresa.");
+        }
+    });
+
+    el.copyPixCodeBtn.addEventListener("click", async () => {
+        const code = el.pixCopiaColaText.value.trim();
+        if (!code) return;
+        try {
+            await navigator.clipboard.writeText(code);
+            showToast("Código Pix Copia e Cola copiado!");
         } catch {
-            showToast("Erro ao salvar empresa.");
+            showToast("Não foi possível copiar o código Pix.");
+        }
+    });
+
+    el.pixProofForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = el.pixCompanyId.value;
+        const isRenewal = el.pixIsRenewal.value === "true";
+
+        try {
+            await CompanyApi.submitPixProof(id, {
+                txId: el.pixTxIdInput.value.trim(),
+                payerNote: el.pixPayerNoteInput.value.trim(),
+                renewal: isRenewal
+            });
+            closeModal(el.pixModal);
+            await refreshMyStores();
+            showToast("Comprovante Pix enviado! Aguardando aprovação do Administrador.");
+        } catch (err) {
+            showToast(err.message || "Erro ao enviar comprovante Pix.");
         }
     });
 
     // Inicialização
-    loadCompanies();
+    (async () => {
+        await loadProviders();
+        if (AuthApi.getToken()) {
+            state.user = await AuthApi.verifySession();
+            await refreshMyStores();
+        }
+        await loadCompanies();
+    })();
 });
