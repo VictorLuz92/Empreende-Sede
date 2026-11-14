@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 
 @Configuration
@@ -69,6 +68,7 @@ public class DataSeeder {
                     });
             testUser.setRole("USER");
             testUser.setPasswordHash(passwordHasher.hash("Usuario@123"));
+            testUser.setSubscriptionExpiresAt(null);
             testUser = userRepository.save(testUser);
 
             if (repository.count() > 0) {
@@ -76,12 +76,10 @@ public class DataSeeder {
             }
 
             Company userOwnedSample = createSeedCompany(
-                    testUser, "Sede Manutenção & Reparos", "Mão de Obra", "Hidráulica", MAO_1,
+                    admin, "Sede Manutenção & Reparos", "Mão de Obra", "Hidráulica", MAO_1,
                     "Serviços elétricos, hidráulicos, montagem de móveis e pequenos reparos residenciais e comerciais com garantia.",
                     "(11) 91234-5678", "5511912345678", "sedemanutencao.oficial"
             );
-            userOwnedSample.setPaymentStatus("PAID");
-            userOwnedSample.setSubscriptionExpiresAt(OffsetDateTime.now().plusDays(30));
 
             repository.saveAll(List.of(
                     // Mão de Obra — Hidráulica (15 exemplos)
@@ -251,44 +249,44 @@ public class DataSeeder {
                             "Feijoada aos sábados, arroz carreteiro, carnes assadas e porções generosas para toda a família.",
                             "(11) 96567-8909", "5511965678909", "fogaomineiro.sede"),
 
-                    // Beleza (Masculina/Feminina) — Salão
-                    createSeedCompany(admin, "Espaço Raiz Beleza & Barbearia", "Beleza (Masculina/Feminina)", "Salão", BEL_1,
+                    // Beleza — Salão
+                    createSeedCompany(admin, "Espaço Raiz Beleza & Barbearia", "Beleza", "Salão", BEL_1,
                             "Cortes masculinos e femininos, barba, coloração, escova e estética facial com horário agendado.",
                             "(11) 99887-7665", "5511998877665", "espacoraiz.beleza"),
-                    createSeedCompany(admin, "Salão Essencial Cabelos", "Beleza (Masculina/Feminina)", "Salão", BEL_3,
+                    createSeedCompany(admin, "Salão Essencial Cabelos", "Beleza", "Salão", BEL_3,
                             "Hidratação profunda, progressiva sem formol, mechas iluminadas e cortes modernos.",
                             "(11) 99887-7666", "5511998877666", "salaoessencial.sede"),
-                    createSeedCompany(admin, "Studio Vibe Capilar", "Beleza (Masculina/Feminina)", "Salão", BEL_2,
+                    createSeedCompany(admin, "Studio Vibe Capilar", "Beleza", "Salão", BEL_2,
                             "Penteados para festas, tratamentos para cachos, reconstrução capilar e atendimento familiar.",
                             "(11) 99887-7667", "5511998877667", "studiovibecapilar"),
-                    // Beleza (Masculina/Feminina) — Barbearia
-                    createSeedCompany(admin, "Barbearia Dom Pedro", "Beleza (Masculina/Feminina)", "Barbearia", BEL_2,
+                    // Beleza — Barbearia
+                    createSeedCompany(admin, "Barbearia Dom Pedro", "Beleza", "Barbearia", BEL_2,
                             "Corte masculino clássico e degradê, barboterapia com toalha quente e cuidados completos para o visual masculino.",
                             "(11) 95567-8905", "5511955678905", "barbeariadompedro"),
-                    createSeedCompany(admin, "Navalha Fina Barber", "Beleza (Masculina/Feminina)", "Barbearia", BEL_1,
+                    createSeedCompany(admin, "Navalha Fina Barber", "Beleza", "Barbearia", BEL_1,
                             "Degradê na navalha, alinhamento de barba, pigmentação leve e planos mensais de corte.",
                             "(11) 95567-8906", "5511955678906", "navalhafinabarber"),
-                    createSeedCompany(admin, "Clube do Corte Masculino", "Beleza (Masculina/Feminina)", "Barbearia", BEL_3,
+                    createSeedCompany(admin, "Clube do Corte Masculino", "Beleza", "Barbearia", BEL_3,
                             "Ambiente descontraído, corte infantil e adulto, barba modelada e sobrancelha masculina.",
                             "(11) 95567-8907", "5511955678907", "clubedocortesede"),
-                    // Beleza (Masculina/Feminina) — Manicure
-                    createSeedCompany(admin, "Studio Bela Essência", "Beleza (Masculina/Feminina)", "Manicure", BEL_3,
+                    // Beleza — Manicure
+                    createSeedCompany(admin, "Studio Bela Essência", "Beleza", "Manicure", BEL_3,
                             "Manicure, pedicure, design de sobrancelhas, alongamento de cílios e maquiagem social em ambiente climatizado.",
                             "(11) 94678-9006", "5511946789006", "studiobelaessencia"),
-                    createSeedCompany(admin, "Esmalteria Mãos de Seda", "Beleza (Masculina/Feminina)", "Manicure", BEL_1,
+                    createSeedCompany(admin, "Esmalteria Mãos de Seda", "Beleza", "Manicure", BEL_1,
                             "Esmaltação em gel, blindagem, spa dos pés e cutilagem cuidadosa com materiais esterilizados.",
                             "(11) 94678-9007", "5511946789007", "esmalteriamaosdeseda"),
-                    createSeedCompany(admin, "Olhar Perfeito Sobrancelhas", "Beleza (Masculina/Feminina)", "Manicure", BEL_2,
+                    createSeedCompany(admin, "Olhar Perfeito Sobrancelhas", "Beleza", "Manicure", BEL_2,
                             "Design personalizado com henna, brow lamination, lash lifting e micropigmentação.",
                             "(11) 94678-9008", "5511946789008", "olharperfeito.sede"),
-                    // Beleza (Masculina/Feminina) — Estética
-                    createSeedCompany(admin, "Clínica Bem-Estar Estética", "Beleza (Masculina/Feminina)", "Estética", BEL_1,
+                    // Beleza — Estética
+                    createSeedCompany(admin, "Clínica Bem-Estar Estética", "Beleza", "Estética", BEL_1,
                             "Limpeza de pele profunda, drenagem linfática, massagem relaxante e cuidados faciais.",
                             "(11) 94789-0109", "5511947890109", "clinicabemestar.sede"),
-                    createSeedCompany(admin, "Toque Sereno Massoterapia", "Beleza (Masculina/Feminina)", "Estética", BEL_3,
+                    createSeedCompany(admin, "Toque Sereno Massoterapia", "Beleza", "Estética", BEL_3,
                             "Massagem modeladora, ventosaterapia, liberação miofascial e relaxamento antiestresse.",
                             "(11) 94789-0110", "5511947890110", "toquesereno.massa"),
-                    createSeedCompany(admin, "Pele Viva Dermocosméticos", "Beleza (Masculina/Feminina)", "Estética", BEL_2,
+                    createSeedCompany(admin, "Pele Viva Dermocosméticos", "Beleza", "Estética", BEL_2,
                             "Peeling suave, hidratação facial revitalizante e protocolos personalizados de autocuidado.",
                             "(11) 94789-0111", "5511947890111", "peleviva.sede"),
 
@@ -353,6 +351,15 @@ public class DataSeeder {
         company.setSubsegment(subsegment);
         company.setLogoUrl(logoUrl);
         company.setDescription(description);
+        company.setOwnerName(owner.getName() != null && !"Administrador Único".equals(owner.getName()) ? owner.getName() : "Empreendedor Local");
+        company.setCep("01310-100");
+        company.setStreet("Av. Paulista");
+        company.setAddressNumber("100");
+        company.setNeighborhood("Bela Vista");
+        company.setCity("São Paulo");
+        company.setState("SP");
+        company.setAddressStatus("CONFIRMED_BY_CEP");
+        company.setAddressConfirmed(true);
         company.setPhone(phone);
         company.setWhatsapp(whatsapp);
         company.setInstagram(instagram);

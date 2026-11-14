@@ -21,6 +21,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -285,13 +286,32 @@ public class AuthService {
     }
 
     private UserInfo toUserInfo(UserAccount user) {
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(user.getRole());
+        OffsetDateTime expires = user.getSubscriptionExpiresAt();
+        boolean expired = false;
+        Long daysRemaining = null;
+
+        if (!isAdmin) {
+            OffsetDateTime now = OffsetDateTime.now();
+            if (expires == null || !expires.isAfter(now)) {
+                expired = true;
+                daysRemaining = 0L;
+            } else {
+                long hours = Duration.between(now, expires).toHours();
+                daysRemaining = Math.max(1L, (long) Math.ceil(hours / 24.0));
+            }
+        }
+
         return new UserInfo(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getRole(),
                 user.getAuthProvider(),
-                user.getAvatarUrl()
+                user.getAvatarUrl(),
+                expires,
+                expired,
+                daysRemaining
         );
     }
 

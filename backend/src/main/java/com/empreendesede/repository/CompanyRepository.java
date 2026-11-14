@@ -15,7 +15,8 @@ public interface CompanyRepository extends JpaRepository<Company, UUID> {
             SELECT c FROM Company c
             WHERE c.active = true
               AND c.approved = true
-              AND (c.subscriptionExpiresAt IS NULL OR c.subscriptionExpiresAt > :now)
+              AND (c.paymentStatus = 'EXEMPT'
+                   OR (c.subscriptionExpiresAt IS NOT NULL AND c.subscriptionExpiresAt > :now))
             ORDER BY c.name ASC
             """)
     List<Company> findPublishedCompanies(@Param("now") OffsetDateTime now);
@@ -24,14 +25,16 @@ public interface CompanyRepository extends JpaRepository<Company, UUID> {
             SELECT c FROM Company c
             WHERE c.active = true
               AND c.approved = true
-              AND (c.subscriptionExpiresAt IS NULL OR c.subscriptionExpiresAt > :now)
+              AND (c.paymentStatus = 'EXEMPT'
+                   OR (c.subscriptionExpiresAt IS NOT NULL AND c.subscriptionExpiresAt > :now))
               AND (:category IS NULL OR :category = '' OR LOWER(c.category) = LOWER(:category))
               AND (:subsegment IS NULL OR :subsegment = '' OR LOWER(COALESCE(c.subsegment, '')) = LOWER(:subsegment))
               AND (:query IS NULL OR :query = ''
                    OR LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%'))
                    OR LOWER(c.description) LIKE LOWER(CONCAT('%', :query, '%'))
                    OR LOWER(c.category) LIKE LOWER(CONCAT('%', :query, '%'))
-                   OR LOWER(COALESCE(c.subsegment, '')) LIKE LOWER(CONCAT('%', :query, '%')))
+                   OR LOWER(COALESCE(c.subsegment, '')) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(COALESCE(c.ownerName, '')) LIKE LOWER(CONCAT('%', :query, '%')))
             ORDER BY c.name ASC
             """)
     List<Company> searchPublishedCompanies(
@@ -45,7 +48,8 @@ public interface CompanyRepository extends JpaRepository<Company, UUID> {
             SELECT DISTINCT c.category FROM Company c
             WHERE c.active = true
               AND c.approved = true
-              AND (c.subscriptionExpiresAt IS NULL OR c.subscriptionExpiresAt > :now)
+              AND (c.paymentStatus = 'EXEMPT'
+                   OR (c.subscriptionExpiresAt IS NOT NULL AND c.subscriptionExpiresAt > :now))
             ORDER BY c.category ASC
             """)
     List<String> findDistinctPublishedCategories(@Param("now") OffsetDateTime now);
@@ -64,4 +68,13 @@ public interface CompanyRepository extends JpaRepository<Company, UUID> {
             ORDER BY c.updatedAt DESC
             """)
     List<Company> findPendingApprovals();
+
+    @Query("""
+            SELECT c FROM Company c
+            WHERE c.active = true
+              AND (c.addressStatus = 'PENDING_ADMIN_CONFIRMATION'
+                   OR (c.hasPendingUpdate = true AND c.pendingAddressStatus = 'PENDING_ADMIN_CONFIRMATION'))
+            ORDER BY c.updatedAt DESC
+            """)
+    List<Company> findPendingAddressConfirmations();
 }

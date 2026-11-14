@@ -54,6 +54,14 @@ public class AdminController {
         return companyService.listPendingApprovals();
     }
 
+    @GetMapping("/address-requests")
+    public List<CompanyResponse> listAddressRequests(
+            @RequestHeader(name = "Authorization", required = false) String authHeader
+    ) {
+        tokenService.requireAdmin(authHeader);
+        return companyService.listPendingAddressConfirmations();
+    }
+
     @GetMapping("/companies")
     public List<CompanyResponse> listAll(
             @RequestHeader(name = "Authorization", required = false) String authHeader
@@ -88,6 +96,15 @@ public class AdminController {
     ) {
         tokenService.requireAdmin(authHeader);
         return companyService.grantOneMonthByAdmin(id);
+    }
+
+    @PostMapping("/companies/{id}/confirm-address")
+    public CompanyResponse confirmAddress(
+            @PathVariable("id") UUID id,
+            @RequestHeader(name = "Authorization", required = false) String authHeader
+    ) {
+        tokenService.requireAdmin(authHeader);
+        return companyService.confirmAddressByAdmin(id);
     }
 
     @PostMapping("/companies/{id}/reject")

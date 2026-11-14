@@ -13,6 +13,16 @@ public record CompanyResponse(
         String subsegment,
         String logoUrl,
         String description,
+        String ownerName,
+        String cep,
+        String street,
+        String addressNumber,
+        String complement,
+        String neighborhood,
+        String city,
+        String state,
+        String addressStatus,
+        boolean addressConfirmed,
         String phone,
         String whatsapp,
         String instagram,
@@ -39,6 +49,15 @@ public record CompanyResponse(
             String subsegment,
             String logoUrl,
             String description,
+            String ownerName,
+            String cep,
+            String street,
+            String addressNumber,
+            String complement,
+            String neighborhood,
+            String city,
+            String state,
+            String addressStatus,
             String phone,
             String whatsapp,
             String instagram
@@ -56,23 +75,38 @@ public record CompanyResponse(
                         company.getPendingSubsegment(),
                         company.getPendingLogoUrl(),
                         company.getPendingDescription(),
+                        company.getPendingOwnerName(),
+                        company.getPendingCep(),
+                        company.getPendingStreet(),
+                        company.getPendingAddressNumber(),
+                        company.getPendingComplement(),
+                        company.getPendingNeighborhood(),
+                        company.getPendingCity(),
+                        company.getPendingState(),
+                        company.getPendingAddressStatus(),
                         company.getPendingPhone(),
                         company.getPendingWhatsapp(),
                         company.getPendingInstagram()
                 )
                 : null;
 
+        boolean isExempt = "EXEMPT".equalsIgnoreCase(company.getPaymentStatus());
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime expires = company.getSubscriptionExpiresAt();
         Long daysRemaining = null;
         boolean expired = false;
-        if (expires != null) {
-            long hours = Duration.between(now, expires).toHours();
-            if (hours <= 0) {
+        if (!isExempt) {
+            if (expires == null) {
                 daysRemaining = 0L;
                 expired = true;
             } else {
-                daysRemaining = (long) Math.ceil(hours / 24.0);
+                long hours = Duration.between(now, expires).toHours();
+                if (hours <= 0) {
+                    daysRemaining = 0L;
+                    expired = true;
+                } else {
+                    daysRemaining = (long) Math.ceil(hours / 24.0);
+                }
             }
         }
 
@@ -83,6 +117,16 @@ public record CompanyResponse(
                 company.getSubsegment(),
                 company.getLogoUrl(),
                 company.getDescription(),
+                company.getOwnerName(),
+                company.getCep(),
+                company.getStreet(),
+                company.getAddressNumber(),
+                company.getComplement(),
+                company.getNeighborhood(),
+                company.getCity(),
+                company.getState(),
+                company.getAddressStatus(),
+                company.isAddressConfirmed(),
                 company.getPhone(),
                 company.getWhatsapp(),
                 company.getInstagram(),

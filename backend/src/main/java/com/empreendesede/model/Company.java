@@ -35,6 +35,36 @@ public class Company {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "owner_name", length = 120)
+    private String ownerName;
+
+    @Column(length = 12)
+    private String cep;
+
+    @Column(length = 180)
+    private String street;
+
+    @Column(name = "address_number", length = 30)
+    private String addressNumber;
+
+    @Column(length = 120)
+    private String complement;
+
+    @Column(length = 120)
+    private String neighborhood;
+
+    @Column(length = 120)
+    private String city;
+
+    @Column(length = 10)
+    private String state;
+
+    @Column(name = "address_status", nullable = false, length = 40)
+    private String addressStatus = "CONFIRMED_BY_CEP";
+
+    @Column(name = "address_confirmed", nullable = false)
+    private boolean addressConfirmed = true;
+
     @Column(nullable = false, length = 30)
     private String phone;
 
@@ -88,6 +118,33 @@ public class Company {
 
     @Column(name = "pending_description", columnDefinition = "TEXT")
     private String pendingDescription;
+
+    @Column(name = "pending_owner_name", length = 120)
+    private String pendingOwnerName;
+
+    @Column(name = "pending_cep", length = 12)
+    private String pendingCep;
+
+    @Column(name = "pending_street", length = 180)
+    private String pendingStreet;
+
+    @Column(name = "pending_address_number", length = 30)
+    private String pendingAddressNumber;
+
+    @Column(name = "pending_complement", length = 120)
+    private String pendingComplement;
+
+    @Column(name = "pending_neighborhood", length = 120)
+    private String pendingNeighborhood;
+
+    @Column(name = "pending_city", length = 120)
+    private String pendingCity;
+
+    @Column(name = "pending_state", length = 10)
+    private String pendingState;
+
+    @Column(name = "pending_address_status", length = 40)
+    private String pendingAddressStatus;
 
     @Column(name = "pending_phone", length = 30)
     private String pendingPhone;
@@ -330,6 +387,158 @@ public class Company {
 
     public void setPendingInstagram(String pendingInstagram) {
         this.pendingInstagram = pendingInstagram;
+    }
+
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
+    }
+
+    public String getCep() {
+        return cep;
+    }
+
+    public void setCep(String cep) {
+        this.cep = cep;
+    }
+
+    public String getStreet() {
+        return street;
+    }
+
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    public String getAddressNumber() {
+        return addressNumber;
+    }
+
+    public void setAddressNumber(String addressNumber) {
+        this.addressNumber = addressNumber;
+    }
+
+    public String getComplement() {
+        return complement;
+    }
+
+    public void setComplement(String complement) {
+        this.complement = complement;
+    }
+
+    public String getNeighborhood() {
+        return neighborhood;
+    }
+
+    public void setNeighborhood(String neighborhood) {
+        this.neighborhood = neighborhood;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getAddressStatus() {
+        return addressStatus;
+    }
+
+    public void setAddressStatus(String addressStatus) {
+        this.addressStatus = addressStatus;
+    }
+
+    public boolean isAddressConfirmed() {
+        return addressConfirmed;
+    }
+
+    public void setAddressConfirmed(boolean addressConfirmed) {
+        this.addressConfirmed = addressConfirmed;
+    }
+
+    public String getPendingOwnerName() {
+        return pendingOwnerName;
+    }
+
+    public void setPendingOwnerName(String pendingOwnerName) {
+        this.pendingOwnerName = pendingOwnerName;
+    }
+
+    public String getPendingCep() {
+        return pendingCep;
+    }
+
+    public void setPendingCep(String pendingCep) {
+        this.pendingCep = pendingCep;
+    }
+
+    public String getPendingStreet() {
+        return pendingStreet;
+    }
+
+    public void setPendingStreet(String pendingStreet) {
+        this.pendingStreet = pendingStreet;
+    }
+
+    public String getPendingAddressNumber() {
+        return pendingAddressNumber;
+    }
+
+    public void setPendingAddressNumber(String pendingAddressNumber) {
+        this.pendingAddressNumber = pendingAddressNumber;
+    }
+
+    public String getPendingComplement() {
+        return pendingComplement;
+    }
+
+    public void setPendingComplement(String pendingComplement) {
+        this.pendingComplement = pendingComplement;
+    }
+
+    public String getPendingNeighborhood() {
+        return pendingNeighborhood;
+    }
+
+    public void setPendingNeighborhood(String pendingNeighborhood) {
+        this.pendingNeighborhood = pendingNeighborhood;
+    }
+
+    public String getPendingCity() {
+        return pendingCity;
+    }
+
+    public void setPendingCity(String pendingCity) {
+        this.pendingCity = pendingCity;
+    }
+
+    public String getPendingState() {
+        return pendingState;
+    }
+
+    public void setPendingState(String pendingState) {
+        this.pendingState = pendingState;
+    }
+
+    public String getPendingAddressStatus() {
+        return pendingAddressStatus;
+    }
+
+    public void setPendingAddressStatus(String pendingAddressStatus) {
+        this.pendingAddressStatus = pendingAddressStatus;
     }
 
     public OffsetDateTime getCreatedAt() {

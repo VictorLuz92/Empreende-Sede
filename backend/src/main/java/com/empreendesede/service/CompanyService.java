@@ -7,6 +7,7 @@ import com.empreendesede.exception.ApiException;
 import com.empreendesede.exception.ResourceNotFoundException;
 import com.empreendesede.model.Company;
 import com.empreendesede.repository.CompanyRepository;
+import com.empreendesede.repository.UserRepository;
 import com.empreendesede.service.TokenService.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -23,11 +24,15 @@ import java.util.UUID;
 @Service
 public class CompanyService {
 
+    public static final String ADDRESS_CONFIRMED_BY_CEP = "CONFIRMED_BY_CEP";
+    public static final String ADDRESS_PENDING_ADMIN = "PENDING_ADMIN_CONFIRMATION";
+    public static final String ADDRESS_CONFIRMED_BY_ADMIN = "CONFIRMED_BY_ADMIN";
+
     public static final List<String> OFFICIAL_CATEGORIES = List.of(
             "Mão de Obra",
             "Comércio",
             "Gastronomia",
-            "Beleza (Masculina/Feminina)",
+            "Beleza",
             "Vestuário"
     );
 
@@ -37,21 +42,24 @@ public class CompanyService {
         map.put("Mão de Obra", List.of("Hidráulica", "Elétrica", "Marcenaria", "Reformas"));
         map.put("Comércio", List.of("Hortifrúti", "Eletrônicos", "Mercearia", "Papelaria"));
         map.put("Gastronomia", List.of("Padaria", "Pizzaria", "Lanchonete", "Doceria", "Restaurante"));
-        map.put("Beleza (Masculina/Feminina)", List.of("Salão", "Barbearia", "Manicure", "Estética"));
+        map.put("Beleza", List.of("Salão", "Barbearia", "Manicure", "Estética"));
         map.put("Vestuário", List.of("Moda", "Fitness", "Casual", "Acessórios"));
         SUBSEGMENTS_BY_CATEGORY = Collections.unmodifiableMap(map);
     }
 
     private final CompanyRepository companyRepository;
+    private final UserRepository userRepository;
     private final PixPayloadGenerator pixPayloadGenerator;
     private final int pixDurationDays;
 
     public CompanyService(
             CompanyRepository companyRepository,
+            UserRepository userRepository,
             PixPayloadGenerator pixPayloadGenerator,
             @Value("${app.pix.duration-days:30}") int pixDurationDays
     ) {
         this.companyRepository = companyRepository;
+        this.userRepository = userRepository;
         this.pixPayloadGenerator = pixPayloadGenerator;
         this.pixDurationDays = pixDurationDays;
     }
@@ -91,6 +99,13 @@ public class CompanyService {
     }
 
     @Transactional(readOnly = true)
+    public List<CompanyResponse> listPendingAddressConfirmations() {
+        return companyRepository.findPendingAddressConfirmations().stream()
+                .map(CompanyResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<CompanyResponse> listAllForAdmin() {
         return companyRepository.findByActiveTrueOrderByUpdatedAtDesc().stream()
                 .map(CompanyResponse::fromEntity)
@@ -101,7 +116,10 @@ public class CompanyService {
     public CompanyResponse getById(UUID id) {
         Company company = findActiveOrThrow(id);
         OffsetDateTime now = OffsetDateTime.now();
-        if (!company.isApproved() || (company.getSubscriptionExpiresAt() != null && !company.getSubscriptionExpiresAt().isAfter(now))) {
+        boolean exempt = "EXEMPT".equalsIgnoreCase(company.getPaymentStatus());
+        boolean hasValidSub = company.getSubscriptionExpiresAt() != null
+                && company.getSubscriptionExpiresAt().isAfter(now);
+        if (!company.isApproved() || (!exempt && !hasValidSub)) {
             throw new ResourceNotFoundException("Empresa não encontrada.");
         }
         return CompanyResponse.fromEntity(company);
@@ -119,6 +137,8 @@ public class CompanyService {
 
     @Transactional
     public CompanyResponse create(CompanyRequest request, AuthenticatedUser user) {
+        validateCepIfRequired(request);
+
         Company company = new Company();
         applyRequest(company, request);
         company.setActive(true);
@@ -126,15 +146,20 @@ public class CompanyService {
         company.setOwnerEmail(user.email());
         company.setHasPendingUpdate(false);
 
+        boolean manualAddressPending = Boolean.TRUE.equals(request.addressNotFoundByCep());
         if (user.isAdmin()) {
             company.setApproved(true);
             company.setPaymentStatus("EXEMPT");
             company.setSubscriptionExpiresAt(null);
+            company.setAddressStatus(manualAddressPending ? ADDRESS_CONFIRMED_BY_ADMIN : ADDRESS_CONFIRMED_BY_CEP);
+            company.setAddressConfirmed(true);
         } else {
             company.setApproved(false);
             company.setPaymentStatus("PENDING_PAYMENT");
             company.setPendingRenewal(false);
             company.setSubscriptionExpiresAt(null);
+            company.setAddressStatus(manualAddressPending ? ADDRESS_PENDING_ADMIN : ADDRESS_CONFIRMED_BY_CEP);
+            company.setAddressConfirmed(!manualAddressPending);
         }
 
         Company saved = companyRepository.save(company);
@@ -143,12 +168,16 @@ public class CompanyService {
 
     @Transactional
     public CompanyResponse update(UUID id, CompanyRequest request, AuthenticatedUser user) {
+        validateCepIfRequired(request);
         Company company = findActiveOrThrow(id);
+        boolean manualAddressPending = Boolean.TRUE.equals(request.addressNotFoundByCep());
 
         if (user.isAdmin()) {
             applyRequest(company, request);
             clearPendingFields(company);
             company.setApproved(true);
+            company.setAddressStatus(manualAddressPending ? ADDRESS_CONFIRMED_BY_ADMIN : ADDRESS_CONFIRMED_BY_CEP);
+            company.setAddressConfirmed(true);
             return CompanyResponse.fromEntity(companyRepository.save(company));
         }
 
@@ -162,9 +191,18 @@ public class CompanyService {
                         ? request.category().trim()
                         : "Geral"
         );
-        company.setPendingSubsegment(request.subsegment() != null && !request.subsegment().isBlank() ? request.subsegment().trim() : null);
-        company.setPendingLogoUrl(request.logoUrl() != null && !request.logoUrl().isBlank() ? request.logoUrl().trim() : null);
+        company.setPendingSubsegment(trimOrNull(request.subsegment()));
+        company.setPendingLogoUrl(trimOrNull(request.logoUrl()));
         company.setPendingDescription(request.description().trim());
+        company.setPendingOwnerName(request.ownerName().trim());
+        company.setPendingCep(formatCep(request.cep()));
+        company.setPendingStreet(request.street().trim());
+        company.setPendingAddressNumber(request.addressNumber().trim());
+        company.setPendingComplement(trimOrNull(request.complement()));
+        company.setPendingNeighborhood(request.neighborhood().trim());
+        company.setPendingCity(request.city().trim());
+        company.setPendingState(request.state().trim().toUpperCase());
+        company.setPendingAddressStatus(manualAddressPending ? ADDRESS_PENDING_ADMIN : ADDRESS_CONFIRMED_BY_CEP);
         company.setPendingPhone(request.phone().trim());
         company.setPendingWhatsapp(sanitizeWhatsapp(request.whatsapp()));
         company.setPendingInstagram(sanitizeInstagram(request.instagram()));
@@ -182,7 +220,7 @@ public class CompanyService {
         }
 
         company.setPixTxId(request.txId().trim());
-        company.setPixPayerNote(request.payerNote() != null ? request.payerNote().trim() : null);
+        company.setPixPayerNote(trimOrNull(request.payerNote()));
         company.setPaymentStatus("PAYMENT_SUBMITTED");
         if (request.renewal() || company.isApproved()) {
             company.setPendingRenewal(true);
@@ -203,6 +241,19 @@ public class CompanyService {
             company.setSubsegment(company.getPendingSubsegment());
             company.setLogoUrl(company.getPendingLogoUrl());
             company.setDescription(company.getPendingDescription());
+            company.setOwnerName(company.getPendingOwnerName());
+            company.setCep(company.getPendingCep());
+            company.setStreet(company.getPendingStreet());
+            company.setAddressNumber(company.getPendingAddressNumber());
+            company.setComplement(company.getPendingComplement());
+            company.setNeighborhood(company.getPendingNeighborhood());
+            company.setCity(company.getPendingCity());
+            company.setState(company.getPendingState());
+            String nextAddrStatus = company.getPendingAddressStatus() != null
+                    ? company.getPendingAddressStatus()
+                    : ADDRESS_CONFIRMED_BY_CEP;
+            company.setAddressStatus(nextAddrStatus);
+            company.setAddressConfirmed(!ADDRESS_PENDING_ADMIN.equalsIgnoreCase(nextAddrStatus));
             company.setPhone(company.getPendingPhone());
             company.setWhatsapp(company.getPendingWhatsapp());
             company.setInstagram(company.getPendingInstagram());
@@ -212,15 +263,19 @@ public class CompanyService {
         boolean needsSubscriptionGrant = !company.isApproved()
                 || "PAYMENT_SUBMITTED".equalsIgnoreCase(company.getPaymentStatus())
                 || "PENDING_PAYMENT".equalsIgnoreCase(company.getPaymentStatus())
-                || company.isPendingRenewal();
+                || "EXPIRED".equalsIgnoreCase(company.getPaymentStatus())
+                || company.isPendingRenewal()
+                || (!"EXEMPT".equalsIgnoreCase(company.getPaymentStatus()) && company.getSubscriptionExpiresAt() == null);
 
         if (needsSubscriptionGrant) {
             OffsetDateTime base = (company.getSubscriptionExpiresAt() != null && company.getSubscriptionExpiresAt().isAfter(now))
                     ? company.getSubscriptionExpiresAt()
                     : now;
-            company.setSubscriptionExpiresAt(base.plusDays(pixDurationDays));
+            OffsetDateTime nextExpiry = base.plusDays(pixDurationDays);
+            company.setSubscriptionExpiresAt(nextExpiry);
             company.setPaymentStatus("PAID");
             company.setPendingRenewal(false);
+            extendOwnerSubscription(company.getOwnerId(), nextExpiry);
         }
 
         company.setApproved(true);
@@ -234,10 +289,23 @@ public class CompanyService {
         OffsetDateTime base = (company.getSubscriptionExpiresAt() != null && company.getSubscriptionExpiresAt().isAfter(now))
                 ? company.getSubscriptionExpiresAt()
                 : now;
-        company.setSubscriptionExpiresAt(base.plusDays(pixDurationDays));
+        OffsetDateTime nextExpiry = base.plusDays(pixDurationDays);
+        company.setSubscriptionExpiresAt(nextExpiry);
         company.setPaymentStatus("PAID");
         company.setPendingRenewal(false);
         company.setApproved(true);
+        extendOwnerSubscription(company.getOwnerId(), nextExpiry);
+        return CompanyResponse.fromEntity(companyRepository.save(company));
+    }
+
+    @Transactional
+    public CompanyResponse confirmAddressByAdmin(UUID id) {
+        Company company = findActiveOrThrow(id);
+        if (company.isHasPendingUpdate() && ADDRESS_PENDING_ADMIN.equalsIgnoreCase(company.getPendingAddressStatus())) {
+            company.setPendingAddressStatus(ADDRESS_CONFIRMED_BY_ADMIN);
+        }
+        company.setAddressStatus(ADDRESS_CONFIRMED_BY_ADMIN);
+        company.setAddressConfirmed(true);
         return CompanyResponse.fromEntity(companyRepository.save(company));
     }
 
@@ -265,6 +333,33 @@ public class CompanyService {
         companyRepository.save(company);
     }
 
+    private void extendOwnerSubscription(UUID ownerId, OffsetDateTime companyExpiry) {
+        if (ownerId == null) {
+            return;
+        }
+        userRepository.findById(ownerId).ifPresent(owner -> {
+            if (!"ADMIN".equalsIgnoreCase(owner.getRole())) {
+                OffsetDateTime current = owner.getSubscriptionExpiresAt();
+                OffsetDateTime updated = (current != null && current.isAfter(companyExpiry)) ? current : companyExpiry;
+                owner.setSubscriptionExpiresAt(updated);
+                userRepository.save(owner);
+            }
+        });
+    }
+
+    private void validateCepIfRequired(CompanyRequest request) {
+        if (Boolean.TRUE.equals(request.addressNotFoundByCep())) {
+            return;
+        }
+        String digits = request.cep() != null ? request.cep().replaceAll("\\D", "") : "";
+        if (digits.length() != 8) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    "Informe um CEP válido com 8 dígitos ou marque que não encontrou o endereço pelo CEP."
+            );
+        }
+    }
+
     private void clearPendingFields(Company company) {
         company.setHasPendingUpdate(false);
         company.setPendingName(null);
@@ -272,6 +367,15 @@ public class CompanyService {
         company.setPendingSubsegment(null);
         company.setPendingLogoUrl(null);
         company.setPendingDescription(null);
+        company.setPendingOwnerName(null);
+        company.setPendingCep(null);
+        company.setPendingStreet(null);
+        company.setPendingAddressNumber(null);
+        company.setPendingComplement(null);
+        company.setPendingNeighborhood(null);
+        company.setPendingCity(null);
+        company.setPendingState(null);
+        company.setPendingAddressStatus(null);
         company.setPendingPhone(null);
         company.setPendingWhatsapp(null);
         company.setPendingInstagram(null);
@@ -293,12 +397,38 @@ public class CompanyService {
                         ? request.category().trim()
                         : "Geral"
         );
-        company.setSubsegment(request.subsegment() != null && !request.subsegment().isBlank() ? request.subsegment().trim() : null);
-        company.setLogoUrl(request.logoUrl() != null && !request.logoUrl().isBlank() ? request.logoUrl().trim() : null);
+        company.setSubsegment(trimOrNull(request.subsegment()));
+        company.setLogoUrl(trimOrNull(request.logoUrl()));
         company.setDescription(request.description().trim());
+        company.setOwnerName(request.ownerName().trim());
+        company.setCep(formatCep(request.cep()));
+        company.setStreet(request.street().trim());
+        company.setAddressNumber(request.addressNumber().trim());
+        company.setComplement(trimOrNull(request.complement()));
+        company.setNeighborhood(request.neighborhood().trim());
+        company.setCity(request.city().trim());
+        company.setState(request.state().trim().toUpperCase());
         company.setPhone(request.phone().trim());
         company.setWhatsapp(sanitizeWhatsapp(request.whatsapp()));
         company.setInstagram(sanitizeInstagram(request.instagram()));
+    }
+
+    private String formatCep(String cep) {
+        if (cep == null || cep.isBlank()) {
+            return null;
+        }
+        String digits = cep.replaceAll("\\D", "");
+        if (digits.length() == 8) {
+            return digits.substring(0, 5) + "-" + digits.substring(5);
+        }
+        return cep.trim();
+    }
+
+    private String trimOrNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
     private String sanitizeWhatsapp(String whatsapp) {
