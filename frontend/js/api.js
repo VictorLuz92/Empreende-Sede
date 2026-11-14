@@ -5,11 +5,94 @@ const ADMIN_BASE_URL = `${API_ORIGIN}/api/admin`;
 
 const USER_TOKEN_KEY = "empreende_sede_user_token";
 const USER_INFO_KEY = "empreende_sede_user_info";
-const STORAGE_KEY = "empreende_sede_demo_companies";
+const STORAGE_KEY = "empreende_sede_demo_companies_v3";
+
+const OFFICIAL_SERVICE_CATEGORIES = [
+    "Mão de Obra",
+    "Comércio",
+    "Gastronomia",
+    "Beleza (Masculina/Feminina)",
+    "Vestuário"
+];
 
 const SEED_COMPANIES = [
+    // Mão de Obra (3 exemplos)
     {
         id: "demo-1",
+        name: "Sede Manutenção & Reparos",
+        category: "Mão de Obra",
+        logoUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80",
+        description: "Serviços elétricos, hidráulicos, montagem de móveis e pequenos reparos residenciais e comerciais com garantia.",
+        phone: "(11) 91234-5678",
+        whatsapp: "5511912345678",
+        instagram: "sedemanutencao.oficial",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    {
+        id: "demo-2",
+        name: "EletroForte Instalações",
+        category: "Mão de Obra",
+        logoUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80",
+        description: "Instalação de ar-condicionado, quadros elétricos, tomadas e iluminação LED com atendimento rápido em toda a cidade.",
+        phone: "(11) 93456-7810",
+        whatsapp: "5511934567810",
+        instagram: "eletroforte.sede",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    {
+        id: "demo-3",
+        name: "Marcenaria Tradição & Sob Medida",
+        category: "Mão de Obra",
+        logoUrl: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=600&q=80",
+        description: "Móveis planejados, restauração em madeira maciça, portas e painéis ripados feitos sob medida para sua casa ou loja.",
+        phone: "(11) 94567-8912",
+        whatsapp: "5511945678912",
+        instagram: "marcenariatradicao",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    // Comércio (3 exemplos)
+    {
+        id: "demo-4",
+        name: "Verde Vida Hortifrúti",
+        category: "Comércio",
+        logoUrl: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80",
+        description: "Produtos orgânicos frescos direto do produtor, cestas semanais por assinatura e entregas rápidas na região.",
+        phone: "(11) 97766-5544",
+        whatsapp: "5511977665544",
+        instagram: "verdevida.organicos",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    {
+        id: "demo-5",
+        name: "TechLocal Informática & Celulares",
+        category: "Comércio",
+        logoUrl: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80",
+        description: "Acessórios para celular, periféricos, notebooks e assistência técnica especializada com peças originais e garantia.",
+        phone: "(11) 99123-4501",
+        whatsapp: "5511991234501",
+        instagram: "techlocal.sede",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    {
+        id: "demo-6",
+        name: "Empório da Serra Mercearia",
+        category: "Comércio",
+        logoUrl: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80",
+        description: "Queijos artesanais, cafés especiais, temperos naturais, bebidas e produtos coloniais selecionados diariamente.",
+        phone: "(11) 98234-5602",
+        whatsapp: "5511982345602",
+        instagram: "emporiodaserra.loja",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    // Gastronomia (3 exemplos)
+    {
+        id: "demo-7",
         name: "Café & Prosa Artesanal",
         category: "Gastronomia",
         logoUrl: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80",
@@ -21,38 +104,100 @@ const SEED_COMPANIES = [
         paymentStatus: "EXEMPT"
     },
     {
-        id: "demo-2",
-        name: "Sede Tech Soluções",
-        category: "Tecnologia",
-        logoUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
-        description: "Desenvolvimento de sistemas sob medida, automação comercial e suporte técnico especializado para pequenos e médios negócios.",
-        phone: "(11) 91234-5678",
-        whatsapp: "5511912345678",
-        instagram: "sedetech.oficial",
+        id: "demo-8",
+        name: "Forno Nobre Pizzaria & Massas",
+        category: "Gastronomia",
+        logoUrl: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80",
+        description: "Pizzas artesanais assadas em forno a lenha com massa de longa fermentação, massas frescas e delivery próprio.",
+        phone: "(11) 97345-6703",
+        whatsapp: "5511973456703",
+        instagram: "fornonobre.pizzas",
         approved: true,
         paymentStatus: "EXEMPT"
     },
     {
-        id: "demo-3",
-        name: "Estúdio Raiz Design",
-        category: "Design & Marketing",
-        logoUrl: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=600&q=80",
-        description: "Identidade visual, gestão de redes sociais e fotografia comercial para impulsionar marcas locais com criatividade.",
+        id: "demo-9",
+        name: "Doce Encanto Confeitaria",
+        category: "Gastronomia",
+        logoUrl: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
+        description: "Bolos artesanais para festas, doces finos, tortas geladas e kits personalizados para eventos e encomendas.",
+        phone: "(11) 96456-7804",
+        whatsapp: "5511964567804",
+        instagram: "doceencanto.confeitaria",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    // Beleza (Masculina/Feminina) (3 exemplos)
+    {
+        id: "demo-10",
+        name: "Espaço Raiz Beleza & Barbearia",
+        category: "Beleza (Masculina/Feminina)",
+        logoUrl: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80",
+        description: "Cortes masculinos e femininos, barba, coloração, escova e estética facial com horário agendado.",
         phone: "(11) 99887-7665",
         whatsapp: "5511998877665",
-        instagram: "estudioraiz.design",
+        instagram: "espacoraiz.beleza",
         approved: true,
         paymentStatus: "EXEMPT"
     },
     {
-        id: "demo-4",
-        name: "Verde Vida Hortifrúti",
-        category: "Comércio Local",
-        logoUrl: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80",
-        description: "Produtos orgânicos frescos direto do produtor, cestas semanais por assinatura e entregas rápidas na região.",
-        phone: "(11) 97766-5544",
-        whatsapp: "5511977665544",
-        instagram: "verdevida.organicos",
+        id: "demo-11",
+        name: "Barbearia Dom Pedro",
+        category: "Beleza (Masculina/Feminina)",
+        logoUrl: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=600&q=80",
+        description: "Corte masculino clássico e degradê, barboterapia com toalha quente e cuidados completos para o visual masculino.",
+        phone: "(11) 95567-8905",
+        whatsapp: "5511955678905",
+        instagram: "barbeariadompedro",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    {
+        id: "demo-12",
+        name: "Studio Bela Essência",
+        category: "Beleza (Masculina/Feminina)",
+        logoUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80",
+        description: "Manicure, pedicure, design de sobrancelhas, alongamento de cílios e maquiagem social em ambiente climatizado.",
+        phone: "(11) 94678-9006",
+        whatsapp: "5511946789006",
+        instagram: "studiobelaessencia",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    // Vestuário (3 exemplos)
+    {
+        id: "demo-13",
+        name: "Ateliê & Moda Local",
+        category: "Vestuário",
+        logoUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80",
+        description: "Roupas casuais masculinas e femininas, confecção própria, ajustes sob medida e peças exclusivas.",
+        phone: "(11) 96543-2109",
+        whatsapp: "5511965432109",
+        instagram: "ateliemodalocal",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    {
+        id: "demo-14",
+        name: "Urbano Fit & Esportes",
+        category: "Vestuário",
+        logoUrl: "https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=600&q=80",
+        description: "Moda fitness, camisetas dry-fit, conjuntos esportivos masculinos e femininos e acessórios para treino e corrida.",
+        phone: "(11) 93789-0107",
+        whatsapp: "5511937890107",
+        instagram: "urbanofit.sede",
+        approved: true,
+        paymentStatus: "EXEMPT"
+    },
+    {
+        id: "demo-15",
+        name: "Villa Jeans & Casual",
+        category: "Vestuário",
+        logoUrl: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80",
+        description: "Calças jeans premium, jaquetas, camisas sociais e looks casuais completos com variedade de numerações.",
+        phone: "(11) 92890-1208",
+        whatsapp: "5511928901208",
+        instagram: "villajeans.oficial",
         approved: true,
         paymentStatus: "EXEMPT"
     }
@@ -228,8 +373,7 @@ const CompanyApi = {
             if (!response.ok) throw new Error("Erro ao buscar categorias");
             return await response.json();
         } catch {
-            const categories = new Set(loadDemoCompanies().map((c) => c.category || "Geral"));
-            return Array.from(categories).sort((a, b) => a.localeCompare(b, "pt-BR"));
+            return [...OFFICIAL_SERVICE_CATEGORIES];
         }
     },
 

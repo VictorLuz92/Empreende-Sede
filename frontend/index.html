@@ -41,6 +41,9 @@
         <!-- Barra de status da conexão (Backend / Modo Demo) -->
         <div id="connectionBanner" class="connection-banner hidden" role="status"></div>
 
+        <!-- Divisão por Tipos de Serviços -->
+        <nav id="serviceTypesNav" class="service-types-nav" aria-label="Tipos de serviços"></nav>
+
         <!-- Barra de pesquisa de empresa conforme wireframe -->
         <section class="search-section" aria-label="Pesquisa de empresas">
             <div class="search-box">
@@ -155,7 +158,7 @@
             <button id="newCompanyMenuBtn" class="drawer-action-primary">+ Divulgar Minha Loja (R$ 50/mês)</button>
 
             <div class="drawer-section">
-                <h3>Categorias</h3>
+                <h3>Tipos de Serviços</h3>
                 <div id="categoryList" class="category-list"></div>
             </div>
 
@@ -283,8 +286,15 @@
                 </label>
 
                 <label>
-                    Categoria *
-                    <input type="text" id="formCategory" required maxlength="80" placeholder="Ex: Gastronomia, Tecnologia, Serviços">
+                    Tipo de Serviço *
+                    <select id="formCategory" required>
+                        <option value="">Selecione o tipo de serviço...</option>
+                        <option value="Mão de Obra">Mão de Obra</option>
+                        <option value="Comércio">Comércio</option>
+                        <option value="Gastronomia">Gastronomia</option>
+                        <option value="Beleza (Masculina/Feminina)">Beleza (Masculina/Feminina)</option>
+                        <option value="Vestuário">Vestuário</option>
+                    </select>
                 </label>
 
                 <!-- Upload de imagem da Logo (usada no carrossel e na foto do usuário) -->

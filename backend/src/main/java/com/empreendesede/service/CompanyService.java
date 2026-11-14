@@ -20,6 +20,14 @@ import java.util.UUID;
 @Service
 public class CompanyService {
 
+    public static final List<String> OFFICIAL_CATEGORIES = List.of(
+            "Mão de Obra",
+            "Comércio",
+            "Gastronomia",
+            "Beleza (Masculina/Feminina)",
+            "Vestuário"
+    );
+
     private final CompanyRepository companyRepository;
     private final PixPayloadGenerator pixPayloadGenerator;
     private final int pixDurationDays;
@@ -83,7 +91,7 @@ public class CompanyService {
 
     @Transactional(readOnly = true)
     public List<String> listCategories() {
-        return companyRepository.findDistinctPublishedCategories(OffsetDateTime.now());
+        return OFFICIAL_CATEGORIES;
     }
 
     @Transactional

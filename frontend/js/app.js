@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
         currentIndex: 0,
         searchQuery: "",
         selectedCategory: "",
+        hasLoadedOnce: false,
+        loadSeq: 0,
+        renderedCategoriesKey: "",
         user: AuthApi.getUser(),
         providers: {
             googleEnabled: false,
@@ -33,6 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
         headerUserAvatarImg: document.getElementById("headerUserAvatarImg"),
         headerUserDefaultIcon: document.getElementById("headerUserDefaultIcon"),
         connectionBanner: document.getElementById("connectionBanner"),
+        serviceTypesNav: document.getElementById("serviceTypesNav"),
+        showcaseArea: document.querySelector(".showcase-area"),
 
         searchInput: document.getElementById("searchInput"),
         clearSearchBtn: document.getElementById("clearSearchBtn"),
@@ -275,30 +280,53 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    function updateActiveCategoryButtons() {
+        el.serviceTypesNav.querySelectorAll("[data-category]").forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.category === state.selectedCategory);
+        });
+        el.categoryList.querySelectorAll("[data-category]").forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.category === state.selectedCategory);
+        });
+    }
+
+    function selectCategory(category, shouldCloseDrawer = false) {
+        state.selectedCategory = category;
+        state.currentIndex = 0;
+        updateActiveCategoryButtons();
+        if (shouldCloseDrawer) closeDrawer();
+        loadCompanies();
+    }
+
     function renderCategories() {
-        el.categoryList.innerHTML = "";
+        const categories = state.categories.length > 0
+            ? state.categories
+            : OFFICIAL_SERVICE_CATEGORIES;
+        const categoriesKey = categories.join("|");
 
-        const allBtn = document.createElement("button");
-        allBtn.className = `category-item ${state.selectedCategory === "" ? "active" : ""}`;
-        allBtn.textContent = "Todas as categorias";
-        allBtn.addEventListener("click", () => {
-            state.selectedCategory = "";
-            closeDrawer();
-            loadCompanies();
-        });
-        el.categoryList.appendChild(allBtn);
+        if (state.renderedCategoriesKey === categoriesKey) {
+            updateActiveCategoryButtons();
+            return;
+        }
+        state.renderedCategoriesKey = categoriesKey;
 
-        state.categories.forEach((cat) => {
-            const btn = document.createElement("button");
-            btn.className = `category-item ${state.selectedCategory === cat ? "active" : ""}`;
-            btn.textContent = cat;
-            btn.addEventListener("click", () => {
-                state.selectedCategory = cat;
-                closeDrawer();
-                loadCompanies();
+        const buildButtons = (container, className, shouldCloseDrawer) => {
+            container.innerHTML = "";
+            const entries = [{ category: "", label: "Todos os Serviços" }, ...categories.map((cat) => ({ category: cat, label: cat }))];
+            entries.forEach(({ category, label }) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.dataset.category = category;
+                btn.className = className;
+                btn.textContent = label;
+                btn.addEventListener("click", () => selectCategory(category, shouldCloseDrawer));
+                container.appendChild(btn);
             });
-            el.categoryList.appendChild(btn);
-        });
+        };
+
+        buildButtons(el.serviceTypesNav, "service-type-tab", false);
+        buildButtons(el.categoryList, "category-item", true);
+
+        updateActiveCategoryButtons();
     }
 
     function renderResultsStrip() {
@@ -550,9 +578,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function loadCompanies(keepId = null) {
-        el.loadingState.classList.remove("hidden");
-        el.companyCard.classList.add("hidden");
-        el.emptyState.classList.add("hidden");
+        const seq = ++state.loadSeq;
+
+        if (!state.hasLoadedOnce) {
+            el.loadingState.classList.remove("hidden");
+            el.companyCard.classList.add("hidden");
+            el.pagerRow.classList.add("hidden");
+            el.emptyState.classList.add("hidden");
+        } else if (el.showcaseArea) {
+            el.showcaseArea.classList.add("is-loading");
+        }
 
         try {
             const [companies, categories] = await Promise.all([
@@ -560,6 +595,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 CompanyApi.listCategories()
             ]);
 
+            if (seq !== state.loadSeq) return;
+
+            state.hasLoadedOnce = true;
             state.companies = companies;
             state.categories = categories;
 
@@ -575,7 +613,12 @@ document.addEventListener("DOMContentLoaded", () => {
             renderResultsStrip();
             renderActiveCompany();
         } finally {
-            el.loadingState.classList.add("hidden");
+            if (seq === state.loadSeq) {
+                el.loadingState.classList.add("hidden");
+                if (el.showcaseArea) {
+                    el.showcaseArea.classList.remove("is-loading");
+                }
+            }
         }
     }
 

@@ -25,6 +25,10 @@
     padding: 0;
 }
 
+html {
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: var(--bg-surface);
@@ -149,6 +153,52 @@ body {
     text-align: center;
 }
 
+/* Divisão por Tipos de Serviços */
+.service-types-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 2px 6px;
+    scrollbar-width: thin;
+}
+
+.service-type-tab {
+    flex-shrink: 0;
+    border: 1.5px solid var(--border-color);
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+    border-radius: var(--radius-pill);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    white-space: nowrap;
+}
+
+.service-type-tab:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.service-type-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+    box-shadow: var(--shadow-sm);
+}
+
+@media (min-width: 768px) {
+    .service-types-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        overflow-x: visible;
+    }
+}
+
 /* Pesquisa empresa */
 .search-section {
     display: flex;
@@ -203,7 +253,10 @@ body {
 
 .results-strip {
     display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
     gap: 8px;
+    min-height: 38px;
     overflow-x: auto;
     padding-bottom: 4px;
     scrollbar-width: thin;
@@ -241,11 +294,16 @@ body {
     flex-direction: column;
     justify-content: space-between;
     gap: 20px;
+    transition: opacity 0.12s ease;
+}
+
+.showcase-area.is-loading {
+    opacity: 0.72;
 }
 
 .company-card {
     width: 100%;
-    margin: auto 0;
+    margin: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1170,6 +1228,7 @@ body {
 }
 
 .company-form input,
+.company-form select,
 .company-form textarea {
     border: 1.5px solid var(--border-color);
     border-radius: 10px;
@@ -1177,10 +1236,12 @@ body {
     font-family: inherit;
     font-size: 0.9rem;
     color: var(--text-primary);
+    background: var(--bg-surface);
     outline: none;
 }
 
 .company-form input:focus,
+.company-form select:focus,
 .company-form textarea:focus {
     border-color: var(--accent);
 }
@@ -1535,11 +1596,6 @@ body {
         font-size: 1.08rem;
     }
 
-    .results-strip {
-        flex-wrap: wrap;
-        overflow-x: visible;
-    }
-
     .modal-card {
         max-width: 520px;
         padding: 24px;
@@ -1571,6 +1627,7 @@ body {
         grid-column: 2;
         grid-row: 1;
         padding: 20px 24px;
+        min-height: 150px;
     }
 
     .company-name {
