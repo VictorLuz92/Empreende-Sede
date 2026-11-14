@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS companies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(150) NOT NULL,
     category VARCHAR(80) NOT NULL DEFAULT 'Geral',
+    subsegment VARCHAR(80),
     logo_url TEXT,
     description TEXT NOT NULL,
     phone VARCHAR(30) NOT NULL,
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS companies (
     has_pending_update BOOLEAN NOT NULL DEFAULT FALSE,
     pending_name VARCHAR(150),
     pending_category VARCHAR(80),
+    pending_subsegment VARCHAR(80),
     pending_logo_url TEXT,
     pending_description TEXT,
     pending_phone VARCHAR(30),
@@ -70,6 +72,7 @@ CREATE TABLE IF NOT EXISTS companies (
 -- Índices para acelerar a pesquisa de empresas
 CREATE INDEX IF NOT EXISTS idx_companies_name ON companies (LOWER(name));
 CREATE INDEX IF NOT EXISTS idx_companies_category ON companies (LOWER(category));
+CREATE INDEX IF NOT EXISTS idx_companies_subsegment ON companies (LOWER(subsegment));
 CREATE INDEX IF NOT EXISTS idx_companies_active ON companies (active);
 
 -- -----------------------------------------------------------------------------
@@ -91,12 +94,13 @@ VALUES
     ('11111111-1111-1111-1111-111111111111', 'Empreendedor Demo', 'contato@empreendesede.com.br', 'ADMIN')
 ON CONFLICT (email) DO NOTHING;
 
-INSERT INTO companies (name, category, logo_url, description, phone, whatsapp, instagram, owner_id)
+INSERT INTO companies (name, category, subsegment, logo_url, description, phone, whatsapp, instagram, owner_id)
 VALUES
     -- Mão de Obra (3 exemplos)
     (
         'Sede Manutenção & Reparos',
         'Mão de Obra',
+        'Reparos & Hidráulica',
         'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80',
         'Serviços elétricos, hidráulicos, montagem de móveis e pequenos reparos residenciais e comerciais com garantia.',
         '(11) 91234-5678',
@@ -107,6 +111,7 @@ VALUES
     (
         'EletroForte Instalações',
         'Mão de Obra',
+        'Elétrica & Instalações',
         'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
         'Instalação de ar-condicionado, quadros elétricos, tomadas e iluminação LED com atendimento rápido em toda a cidade.',
         '(11) 93456-7810',
@@ -117,6 +122,7 @@ VALUES
     (
         'Marcenaria Tradição & Sob Medida',
         'Mão de Obra',
+        'Marcenaria & Móveis',
         'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=600&q=80',
         'Móveis planejados, restauração em madeira maciça, portas e painéis ripados feitos sob medida para sua casa ou loja.',
         '(11) 94567-8912',
@@ -128,6 +134,7 @@ VALUES
     (
         'Verde Vida Hortifrúti',
         'Comércio',
+        'Hortifrúti & Orgânicos',
         'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80',
         'Produtos orgânicos frescos direto do produtor, cestas semanais por assinatura e entregas rápidas na região.',
         '(11) 97766-5544',
@@ -138,6 +145,7 @@ VALUES
     (
         'TechLocal Informática & Celulares',
         'Comércio',
+        'Informática & Celulares',
         'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80',
         'Acessórios para celular, periféricos, notebooks e assistência técnica especializada com peças originais e garantia.',
         '(11) 99123-4501',
@@ -148,6 +156,7 @@ VALUES
     (
         'Empório da Serra Mercearia',
         'Comércio',
+        'Mercearia & Empório',
         'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80',
         'Queijos artesanais, cafés especiais, temperos naturais, bebidas e produtos coloniais selecionados diariamente.',
         '(11) 98234-5602',
@@ -159,6 +168,7 @@ VALUES
     (
         'Café & Prosa Artesanal',
         'Gastronomia',
+        'Cafeteria & Padaria',
         'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
         'Cafeteria especializada em grãos selecionados, pães de fermentação natural e um espaço acolhedor para reuniões e trabalho remoto.',
         '(11) 98765-4321',
@@ -169,6 +179,7 @@ VALUES
     (
         'Forno Nobre Pizzaria & Massas',
         'Gastronomia',
+        'Pizzaria & Massas',
         'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80',
         'Pizzas artesanais assadas em forno a lenha com massa de longa fermentação, massas frescas e delivery próprio.',
         '(11) 97345-6703',
@@ -179,6 +190,7 @@ VALUES
     (
         'Doce Encanto Confeitaria',
         'Gastronomia',
+        'Doceria & Confeitaria',
         'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80',
         'Bolos artesanais para festas, doces finos, tortas geladas e kits personalizados para eventos e encomendas.',
         '(11) 96456-7804',
@@ -190,6 +202,7 @@ VALUES
     (
         'Espaço Raiz Beleza & Barbearia',
         'Beleza (Masculina/Feminina)',
+        'Salão Unissex',
         'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80',
         'Cortes masculinos e femininos, barba, coloração, escova e estética facial com horário agendado.',
         '(11) 99887-7665',
@@ -200,6 +213,7 @@ VALUES
     (
         'Barbearia Dom Pedro',
         'Beleza (Masculina/Feminina)',
+        'Barbearia',
         'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=600&q=80',
         'Corte masculino clássico e degradê, barboterapia com toalha quente e cuidados completos para o visual masculino.',
         '(11) 95567-8905',
@@ -210,6 +224,7 @@ VALUES
     (
         'Studio Bela Essência',
         'Beleza (Masculina/Feminina)',
+        'Unhas & Sobrancelhas',
         'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80',
         'Manicure, pedicure, design de sobrancelhas, alongamento de cílios e maquiagem social em ambiente climatizado.',
         '(11) 94678-9006',
@@ -221,6 +236,7 @@ VALUES
     (
         'Ateliê & Moda Local',
         'Vestuário',
+        'Moda Local & Ajustes',
         'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80',
         'Roupas casuais masculinas e femininas, confecção própria, ajustes sob medida e peças exclusivas.',
         '(11) 96543-2109',
@@ -231,6 +247,7 @@ VALUES
     (
         'Urbano Fit & Esportes',
         'Vestuário',
+        'Fitness & Esportes',
         'https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=600&q=80',
         'Moda fitness, camisetas dry-fit, conjuntos esportivos masculinos e femininos e acessórios para treino e corrida.',
         '(11) 93789-0107',
@@ -241,6 +258,7 @@ VALUES
     (
         'Villa Jeans & Casual',
         'Vestuário',
+        'Jeans & Casual',
         'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80',
         'Calças jeans premium, jaquetas, camisas sociais e looks casuais completos com variedade de numerações.',
         '(11) 92890-1208',

@@ -26,6 +26,9 @@ public class Company {
     @Column(nullable = false, length = 80)
     private String category = "Geral";
 
+    @Column(length = 80)
+    private String subsegment;
+
     @Column(name = "logo_url", columnDefinition = "TEXT")
     private String logoUrl;
 
@@ -76,6 +79,9 @@ public class Company {
 
     @Column(name = "pending_category", length = 80)
     private String pendingCategory;
+
+    @Column(name = "pending_subsegment", length = 80)
+    private String pendingSubsegment;
 
     @Column(name = "pending_logo_url", columnDefinition = "TEXT")
     private String pendingLogoUrl;
@@ -132,6 +138,14 @@ public class Company {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public String getSubsegment() {
+        return subsegment;
+    }
+
+    public void setSubsegment(String subsegment) {
+        this.subsegment = subsegment;
     }
 
     public String getLogoUrl() {
@@ -268,6 +282,14 @@ public class Company {
 
     public void setPendingCategory(String pendingCategory) {
         this.pendingCategory = pendingCategory;
+    }
+
+    public String getPendingSubsegment() {
+        return pendingSubsegment;
+    }
+
+    public void setPendingSubsegment(String pendingSubsegment) {
+        this.pendingSubsegment = pendingSubsegment;
     }
 
     public String getPendingLogoUrl() {

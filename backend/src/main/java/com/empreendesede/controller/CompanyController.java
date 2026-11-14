@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -37,14 +38,20 @@ public class CompanyController {
     @GetMapping
     public List<CompanyResponse> list(
             @RequestParam(name = "q", required = false) String q,
-            @RequestParam(name = "category", required = false) String category
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "subsegment", required = false) String subsegment
     ) {
-        return companyService.listCompanies(q, category);
+        return companyService.listCompanies(q, category, subsegment);
     }
 
     @GetMapping("/categories")
     public List<String> listCategories() {
         return companyService.listCategories();
+    }
+
+    @GetMapping("/subsegments")
+    public Map<String, List<String>> listSubsegments() {
+        return companyService.listSubsegments();
     }
 
     @GetMapping("/mine")

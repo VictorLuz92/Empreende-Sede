@@ -254,12 +254,121 @@ body {
 .results-strip {
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 8px;
     min-height: 38px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: thin;
+    overflow: visible;
+    padding: 2px 0;
+}
+
+.results-strip-hint {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    padding: 4px 2px;
+}
+
+.subsegment-stores-panel {
+    border: 1px solid var(--border-color);
+    background: var(--bg-subtle);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.subsegment-stores-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.subsegment-stores-count {
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.subsegment-stores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 8px;
+}
+
+.subsegment-store-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    padding: 8px 10px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.subsegment-store-item:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.subsegment-store-item.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: var(--shadow-sm);
+}
+
+.subsegment-store-thumb {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border-color);
+}
+
+.subsegment-store-initials {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.subsegment-store-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.subsegment-store-name {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.subsegment-store-phone {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
 .result-chip {

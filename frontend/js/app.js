@@ -5,13 +5,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const state = {
         companies: [],
         categories: [],
+        subsegmentsMap: { ...OFFICIAL_SERVICE_SUBSEGMENTS },
         myStores: [],
         currentIndex: 0,
         searchQuery: "",
         selectedCategory: "",
+        selectedSubsegment: "",
         hasLoadedOnce: false,
         loadSeq: 0,
         renderedCategoriesKey: "",
+        renderedSubsegmentsKey: "",
         user: AuthApi.getUser(),
         providers: {
             googleEnabled: false,
@@ -42,6 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
         searchInput: document.getElementById("searchInput"),
         clearSearchBtn: document.getElementById("clearSearchBtn"),
         resultsStrip: document.getElementById("resultsStrip"),
+        subsegmentStoresList: document.getElementById("subsegmentStoresList"),
         categoryList: document.getElementById("categoryList"),
 
         loadingState: document.getElementById("loadingState"),
@@ -114,6 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
         removeLogoBtn: document.getElementById("removeLogoBtn"),
         formName: document.getElementById("formName"),
         formCategory: document.getElementById("formCategory"),
+        formSubsegment: document.getElementById("formSubsegment"),
         formDescription: document.getElementById("formDescription"),
         formPhone: document.getElementById("formPhone"),
         formWhatsapp: document.getElementById("formWhatsapp"),
@@ -306,8 +311,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function selectCategory(category, shouldCloseDrawer = false) {
         state.selectedCategory = category;
+        state.selectedSubsegment = "";
         state.currentIndex = 0;
         updateActiveCategoryButtons();
+        renderResultsStrip();
         if (shouldCloseDrawer) closeDrawer();
         loadCompanies();
     }
@@ -344,19 +351,133 @@ document.addEventListener("DOMContentLoaded", () => {
         updateActiveCategoryButtons();
     }
 
+    function updateActiveSubsegmentButtons() {
+        el.resultsStrip.querySelectorAll("[data-subsegment]").forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.subsegment === state.selectedSubsegment);
+        });
+    }
+
     function renderResultsStrip() {
+        if (!state.selectedCategory) {
+            if (state.renderedSubsegmentsKey === "__NONE__") return;
+            state.renderedSubsegmentsKey = "__NONE__";
+            el.resultsStrip.innerHTML = "";
+            const hint = document.createElement("span");
+            hint.className = "results-strip-hint";
+            hint.textContent = "Selecione um tipo de serviço acima para ver os subsegmentos da comunidade.";
+            el.resultsStrip.appendChild(hint);
+            return;
+        }
+
+        const subsegments = state.subsegmentsMap[state.selectedCategory]
+            || OFFICIAL_SERVICE_SUBSEGMENTS[state.selectedCategory]
+            || [];
+        const stripKey = `${state.selectedCategory}::${subsegments.join("|")}`;
+
+        if (state.renderedSubsegmentsKey === stripKey) {
+            updateActiveSubsegmentButtons();
+            return;
+        }
+        state.renderedSubsegmentsKey = stripKey;
+
         el.resultsStrip.innerHTML = "";
-        state.companies.forEach((company, idx) => {
+        const entries = [{ subsegment: "", label: "Todos" }, ...subsegments.map((sub) => ({ subsegment: sub, label: sub }))];
+        entries.forEach(({ subsegment, label }) => {
             const chip = document.createElement("button");
-            chip.className = `result-chip ${idx === state.currentIndex ? "active" : ""}`;
-            chip.textContent = company.name;
+            chip.type = "button";
+            chip.dataset.subsegment = subsegment;
+            chip.className = "result-chip";
+            chip.textContent = label;
             chip.addEventListener("click", () => {
-                state.currentIndex = idx;
-                renderActiveCompany();
-                renderResultsStrip();
+                state.selectedSubsegment = subsegment;
+                state.currentIndex = 0;
+                updateActiveSubsegmentButtons();
+                loadCompanies();
             });
             el.resultsStrip.appendChild(chip);
         });
+
+        updateActiveSubsegmentButtons();
+    }
+
+    function updateActiveSubsegmentStoreItem() {
+        el.subsegmentStoresList.querySelectorAll("[data-store-index]").forEach((btn) => {
+            btn.classList.toggle("active", Number(btn.dataset.storeIndex) === state.currentIndex);
+        });
+    }
+
+    function renderSubsegmentStoresList() {
+        if (!state.selectedCategory || !state.selectedSubsegment) {
+            el.subsegmentStoresList.classList.add("hidden");
+            el.subsegmentStoresList.innerHTML = "";
+            return;
+        }
+
+        el.subsegmentStoresList.classList.remove("hidden");
+        el.subsegmentStoresList.innerHTML = "";
+
+        const header = document.createElement("div");
+        header.className = "subsegment-stores-header";
+        const title = document.createElement("span");
+        title.textContent = `Lojas em ${state.selectedSubsegment}`;
+        const countBadge = document.createElement("span");
+        countBadge.className = "subsegment-stores-count";
+        countBadge.textContent = state.companies.length === 1 ? "1 loja" : `${state.companies.length} lojas`;
+        header.appendChild(title);
+        header.appendChild(countBadge);
+        el.subsegmentStoresList.appendChild(header);
+
+        if (state.companies.length === 0) {
+            const emptyMsg = document.createElement("p");
+            emptyMsg.className = "results-strip-hint";
+            emptyMsg.textContent = "Nenhuma loja cadastrada neste subsegmento ainda.";
+            el.subsegmentStoresList.appendChild(emptyMsg);
+            return;
+        }
+
+        const grid = document.createElement("div");
+        grid.className = "subsegment-stores-grid";
+
+        state.companies.forEach((company, idx) => {
+            const item = document.createElement("button");
+            item.type = "button";
+            item.dataset.storeIndex = String(idx);
+            item.className = `subsegment-store-item ${idx === state.currentIndex ? "active" : ""}`;
+
+            if (company.logoUrl) {
+                const img = document.createElement("img");
+                img.src = company.logoUrl;
+                img.alt = company.name;
+                img.className = "subsegment-store-thumb";
+                item.appendChild(img);
+            } else {
+                const fallback = document.createElement("span");
+                fallback.className = "subsegment-store-initials";
+                fallback.textContent = getInitials(company.name);
+                item.appendChild(fallback);
+            }
+
+            const meta = document.createElement("div");
+            meta.className = "subsegment-store-meta";
+            const nameEl = document.createElement("span");
+            nameEl.className = "subsegment-store-name";
+            nameEl.textContent = company.name;
+            const phoneEl = document.createElement("span");
+            phoneEl.className = "subsegment-store-phone";
+            phoneEl.textContent = company.phone || "Ver detalhes";
+            meta.appendChild(nameEl);
+            meta.appendChild(phoneEl);
+            item.appendChild(meta);
+
+            item.addEventListener("click", () => {
+                state.currentIndex = idx;
+                renderActiveCompany();
+                updateActiveSubsegmentStoreItem();
+            });
+            grid.appendChild(item);
+        });
+
+        el.subsegmentStoresList.appendChild(grid);
     }
 
     function renderActiveCompany() {
@@ -380,7 +501,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         el.companyName.textContent = company.name;
         el.companyDescription.textContent = company.description;
-        el.companyCategoryBadge.textContent = company.category || "Geral";
+        el.companyCategoryBadge.textContent = company.subsegment
+            ? `${company.category || "Geral"} • ${company.subsegment}`
+            : (company.category || "Geral");
         el.companyInitials.textContent = getInitials(company.name);
 
         if (company.logoUrl) {
@@ -603,9 +726,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const [companies, categories] = await Promise.all([
-                CompanyApi.list(state.searchQuery, state.selectedCategory),
-                CompanyApi.listCategories()
+            const [companies, categories, subsegments] = await Promise.all([
+                CompanyApi.list(state.searchQuery, state.selectedCategory, state.selectedSubsegment),
+                CompanyApi.listCategories(),
+                CompanyApi.listSubsegments()
             ]);
 
             if (seq !== state.loadSeq) return;
@@ -613,6 +737,9 @@ document.addEventListener("DOMContentLoaded", () => {
             state.hasLoadedOnce = true;
             state.companies = companies;
             state.categories = categories;
+            if (subsegments && Object.keys(subsegments).length > 0) {
+                state.subsegmentsMap = subsegments;
+            }
 
             if (keepId) {
                 const foundIndex = companies.findIndex((c) => c.id === keepId);
@@ -624,6 +751,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderConnectionBanner();
             renderCategories();
             renderResultsStrip();
+            renderSubsegmentStoresList();
             renderActiveCompany();
         } finally {
             if (seq === state.loadSeq) {
@@ -651,6 +779,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    function populateFormSubsegments(category, selectedSubsegment = "") {
+        const list = state.subsegmentsMap[category] || OFFICIAL_SERVICE_SUBSEGMENTS[category] || [];
+        el.formSubsegment.innerHTML = "";
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = list.length > 0 ? "Selecione o subsegmento (opcional)..." : "Selecione primeiro o tipo de serviço...";
+        el.formSubsegment.appendChild(defaultOpt);
+
+        list.forEach((sub) => {
+            const opt = document.createElement("option");
+            opt.value = sub;
+            opt.textContent = sub;
+            el.formSubsegment.appendChild(opt);
+        });
+        el.formSubsegment.value = selectedSubsegment || "";
+    }
+
     function openCompanyForm(company = null) {
         if (!state.user || !AuthApi.getToken()) {
             openAuthModal(() => openCompanyForm(company));
@@ -666,6 +811,7 @@ document.addEventListener("DOMContentLoaded", () => {
             el.formCompanyId.value = company.id;
             el.formName.value = source.name || "";
             el.formCategory.value = source.category || "";
+            populateFormSubsegments(source.category || "", source.subsegment || "");
             el.formDescription.value = source.description || "";
             el.formPhone.value = source.phone || "";
             el.formWhatsapp.value = source.whatsapp || "";
@@ -677,12 +823,17 @@ document.addEventListener("DOMContentLoaded", () => {
             el.formModalTitle.textContent = "Cadastrar Nova Loja";
             el.companyForm.reset();
             el.formCompanyId.value = "";
+            populateFormSubsegments("", "");
             el.formApprovalNotice.innerHTML = "💳 <strong>Taxa de divulgação: R$ 50,00 no Pix</strong> (direito a 1 mês na vitrine). Sua loja entra no ar após pagamento e aprovação do Administrador.";
             el.formSubmitBtn.textContent = "Continuar para Pix (R$ 50,00)";
             updateFormLogoPreview("", "");
         }
         openModal(el.companyFormModal);
     }
+
+    el.formCategory.addEventListener("change", () => {
+        populateFormSubsegments(el.formCategory.value, "");
+    });
 
     function processImageUpload(fileInput, errorEl, maxKB, onLoaded) {
         const file = fileInput.files?.[0];
@@ -892,6 +1043,8 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         state.searchQuery = "";
         state.selectedCategory = "";
+        state.selectedSubsegment = "";
+        state.currentIndex = 0;
         el.searchInput.value = "";
         el.clearSearchBtn.classList.add("hidden");
         loadCompanies();
@@ -914,6 +1067,8 @@ document.addEventListener("DOMContentLoaded", () => {
     el.resetFilterBtn.addEventListener("click", () => {
         state.searchQuery = "";
         state.selectedCategory = "";
+        state.selectedSubsegment = "";
+        state.currentIndex = 0;
         el.searchInput.value = "";
         el.clearSearchBtn.classList.add("hidden");
         loadCompanies();
@@ -923,7 +1078,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (state.currentIndex > 0) {
             state.currentIndex -= 1;
             renderActiveCompany();
-            renderResultsStrip();
+            updateActiveSubsegmentStoreItem();
         }
     });
 
@@ -931,7 +1086,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (state.currentIndex < state.companies.length - 1) {
             state.currentIndex += 1;
             renderActiveCompany();
-            renderResultsStrip();
+            updateActiveSubsegmentStoreItem();
         }
     });
 
@@ -1005,6 +1160,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const payload = {
             name: el.formName.value.trim(),
             category: el.formCategory.value.trim(),
+            subsegment: el.formSubsegment.value.trim() || null,
             logoUrl: el.formLogoData.value.trim() || null,
             description: el.formDescription.value.trim(),
             phone: el.formPhone.value.trim(),

@@ -26,15 +26,18 @@ public interface CompanyRepository extends JpaRepository<Company, UUID> {
               AND c.approved = true
               AND (c.subscriptionExpiresAt IS NULL OR c.subscriptionExpiresAt > :now)
               AND (:category IS NULL OR :category = '' OR LOWER(c.category) = LOWER(:category))
+              AND (:subsegment IS NULL OR :subsegment = '' OR LOWER(COALESCE(c.subsegment, '')) = LOWER(:subsegment))
               AND (:query IS NULL OR :query = ''
                    OR LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%'))
                    OR LOWER(c.description) LIKE LOWER(CONCAT('%', :query, '%'))
-                   OR LOWER(c.category) LIKE LOWER(CONCAT('%', :query, '%')))
+                   OR LOWER(c.category) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(COALESCE(c.subsegment, '')) LIKE LOWER(CONCAT('%', :query, '%')))
             ORDER BY c.name ASC
             """)
     List<Company> searchPublishedCompanies(
             @Param("query") String query,
             @Param("category") String category,
+            @Param("subsegment") String subsegment,
             @Param("now") OffsetDateTime now
     );
 

@@ -11,6 +11,9 @@ public record CompanyRequest(
         @Size(max = 80, message = "A categoria deve ter no máximo 80 caracteres.")
         String category,
 
+        @Size(max = 80, message = "O subsegmento deve ter no máximo 80 caracteres.")
+        String subsegment,
+
         String logoUrl,
 
         @NotBlank(message = "A descrição da empresa é obrigatória.")

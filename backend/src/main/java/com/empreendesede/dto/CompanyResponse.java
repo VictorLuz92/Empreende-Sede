@@ -10,6 +10,7 @@ public record CompanyResponse(
         UUID id,
         String name,
         String category,
+        String subsegment,
         String logoUrl,
         String description,
         String phone,
@@ -35,6 +36,7 @@ public record CompanyResponse(
     public record PendingData(
             String name,
             String category,
+            String subsegment,
             String logoUrl,
             String description,
             String phone,
@@ -51,6 +53,7 @@ public record CompanyResponse(
                 ? new PendingData(
                         company.getPendingName(),
                         company.getPendingCategory(),
+                        company.getPendingSubsegment(),
                         company.getPendingLogoUrl(),
                         company.getPendingDescription(),
                         company.getPendingPhone(),
@@ -77,6 +80,7 @@ public record CompanyResponse(
                 company.getId(),
                 company.getName(),
                 company.getCategory(),
+                company.getSubsegment(),
                 company.getLogoUrl(),
                 company.getDescription(),
                 company.getPhone(),

@@ -61,8 +61,11 @@
                 <button id="clearSearchBtn" class="clear-btn hidden" aria-label="Limpar pesquisa">&times;</button>
             </div>
 
-            <!-- Lista rápida de resultados / chips para navegar entre empresas -->
-            <div id="resultsStrip" class="results-strip" aria-label="Empresas encontradas"></div>
+            <!-- Subsegmentos do tipo de serviço selecionado -->
+            <div id="resultsStrip" class="results-strip" aria-label="Subsegmentos do serviço"></div>
+
+            <!-- Lista de lojas dentro do subsegmento selecionado -->
+            <div id="subsegmentStoresList" class="subsegment-stores-panel hidden" aria-label="Lojas do subsegmento"></div>
         </section>
 
         <!-- Área principal: Card central da empresa conforme wireframe -->
@@ -321,6 +324,13 @@
                         <option value="Gastronomia">Gastronomia</option>
                         <option value="Beleza (Masculina/Feminina)">Beleza (Masculina/Feminina)</option>
                         <option value="Vestuário">Vestuário</option>
+                    </select>
+                </label>
+
+                <label>
+                    Subsegmento da Comunidade
+                    <select id="formSubsegment">
+                        <option value="">Selecione primeiro o tipo de serviço...</option>
                     </select>
                 </label>
 

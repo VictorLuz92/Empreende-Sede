@@ -14,7 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -27,6 +30,17 @@ public class CompanyService {
             "Beleza (Masculina/Feminina)",
             "Vestuário"
     );
+
+    public static final Map<String, List<String>> SUBSEGMENTS_BY_CATEGORY;
+    static {
+        Map<String, List<String>> map = new LinkedHashMap<>();
+        map.put("Mão de Obra", List.of("Reparos & Hidráulica", "Elétrica & Instalações", "Marcenaria & Móveis", "Pintura & Reformas"));
+        map.put("Comércio", List.of("Hortifrúti & Orgânicos", "Informática & Celulares", "Mercearia & Empório", "Papelaria & Utilidades"));
+        map.put("Gastronomia", List.of("Cafeteria & Padaria", "Pizzaria & Massas", "Doceria & Confeitaria", "Marmitas & Caseiros"));
+        map.put("Beleza (Masculina/Feminina)", List.of("Salão Unissex", "Barbearia", "Unhas & Sobrancelhas", "Estética & Cuidados"));
+        map.put("Vestuário", List.of("Moda Local & Ajustes", "Fitness & Esportes", "Jeans & Casual", "Infantil & Acessórios"));
+        SUBSEGMENTS_BY_CATEGORY = Collections.unmodifiableMap(map);
+    }
 
     private final CompanyRepository companyRepository;
     private final PixPayloadGenerator pixPayloadGenerator;
@@ -43,15 +57,19 @@ public class CompanyService {
     }
 
     @Transactional(readOnly = true)
-    public List<CompanyResponse> listCompanies(String query, String category) {
+    public List<CompanyResponse> listCompanies(String query, String category, String subsegment) {
         String normalizedQuery = query != null ? query.trim() : null;
         String normalizedCategory = category != null ? category.trim() : null;
+        String normalizedSubsegment = subsegment != null ? subsegment.trim() : null;
         OffsetDateTime now = OffsetDateTime.now();
 
-        List<Company> companies = (normalizedQuery == null || normalizedQuery.isEmpty())
+        boolean noFilters = (normalizedQuery == null || normalizedQuery.isEmpty())
                 && (normalizedCategory == null || normalizedCategory.isEmpty())
+                && (normalizedSubsegment == null || normalizedSubsegment.isEmpty());
+
+        List<Company> companies = noFilters
                 ? companyRepository.findPublishedCompanies(now)
-                : companyRepository.searchPublishedCompanies(normalizedQuery, normalizedCategory, now);
+                : companyRepository.searchPublishedCompanies(normalizedQuery, normalizedCategory, normalizedSubsegment, now);
 
         return companies.stream()
                 .map(CompanyResponse::fromEntity)
@@ -92,6 +110,11 @@ public class CompanyService {
     @Transactional(readOnly = true)
     public List<String> listCategories() {
         return OFFICIAL_CATEGORIES;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, List<String>> listSubsegments() {
+        return SUBSEGMENTS_BY_CATEGORY;
     }
 
     @Transactional
@@ -139,6 +162,7 @@ public class CompanyService {
                         ? request.category().trim()
                         : "Geral"
         );
+        company.setPendingSubsegment(request.subsegment() != null && !request.subsegment().isBlank() ? request.subsegment().trim() : null);
         company.setPendingLogoUrl(request.logoUrl() != null && !request.logoUrl().isBlank() ? request.logoUrl().trim() : null);
         company.setPendingDescription(request.description().trim());
         company.setPendingPhone(request.phone().trim());
@@ -176,6 +200,7 @@ public class CompanyService {
         if (company.isHasPendingUpdate()) {
             company.setName(company.getPendingName());
             company.setCategory(company.getPendingCategory() != null ? company.getPendingCategory() : "Geral");
+            company.setSubsegment(company.getPendingSubsegment());
             company.setLogoUrl(company.getPendingLogoUrl());
             company.setDescription(company.getPendingDescription());
             company.setPhone(company.getPendingPhone());
@@ -244,6 +269,7 @@ public class CompanyService {
         company.setHasPendingUpdate(false);
         company.setPendingName(null);
         company.setPendingCategory(null);
+        company.setPendingSubsegment(null);
         company.setPendingLogoUrl(null);
         company.setPendingDescription(null);
         company.setPendingPhone(null);
@@ -267,6 +293,7 @@ public class CompanyService {
                         ? request.category().trim()
                         : "Geral"
         );
+        company.setSubsegment(request.subsegment() != null && !request.subsegment().isBlank() ? request.subsegment().trim() : null);
         company.setLogoUrl(request.logoUrl() != null && !request.logoUrl().isBlank() ? request.logoUrl().trim() : null);
         company.setDescription(request.description().trim());
         company.setPhone(request.phone().trim());
