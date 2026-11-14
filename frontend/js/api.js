@@ -332,6 +332,18 @@ const AuthApi = {
         } catch {
             return this.getUser();
         }
+    },
+
+    async updateAvatar(avatarUrl) {
+        const response = await fetch(`${AUTH_BASE_URL}/me/avatar`, {
+            method: "PUT",
+            headers: this.authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify({ avatarUrl: avatarUrl || null })
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao atualizar foto de perfil."));
+        const user = await response.json();
+        localStorage.setItem(USER_INFO_KEY, JSON.stringify(user));
+        return user;
     }
 };
 

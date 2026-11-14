@@ -39,12 +39,17 @@ public final class AuthDtos {
             String token
     ) {}
 
+    public record UpdateAvatarRequest(
+            String avatarUrl
+    ) {}
+
     public record UserInfo(
             UUID id,
             String name,
             String email,
             String role,
-            String authProvider
+            String authProvider,
+            String avatarUrl
     ) {}
 
     public record AuthResponse(

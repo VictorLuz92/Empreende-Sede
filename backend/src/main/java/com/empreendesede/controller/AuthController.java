@@ -5,6 +5,7 @@ import com.empreendesede.dto.AuthDtos.LoginRequest;
 import com.empreendesede.dto.AuthDtos.OAuthRequest;
 import com.empreendesede.dto.AuthDtos.ProvidersResponse;
 import com.empreendesede.dto.AuthDtos.RegisterRequest;
+import com.empreendesede.dto.AuthDtos.UpdateAvatarRequest;
 import com.empreendesede.dto.AuthDtos.UserInfo;
 import com.empreendesede.service.AuthService;
 import com.empreendesede.service.TokenService;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -59,6 +61,15 @@ public class AuthController {
     @GetMapping("/me")
     public UserInfo me(@RequestHeader(name = "Authorization", required = false) String authHeader) {
         AuthenticatedUser user = tokenService.requireUser(authHeader);
-        return new UserInfo(user.id(), user.name(), user.email(), user.role(), "SESSION");
+        return authService.getUserInfo(user.id());
+    }
+
+    @PutMapping("/me/avatar")
+    public UserInfo updateAvatar(
+            @RequestBody UpdateAvatarRequest request,
+            @RequestHeader(name = "Authorization", required = false) String authHeader
+    ) {
+        AuthenticatedUser user = tokenService.requireUser(authHeader);
+        return authService.updateAvatar(user.id(), request != null ? request.avatarUrl() : null);
     }
 }

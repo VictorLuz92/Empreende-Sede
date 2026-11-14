@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const MAX_LOGO_SIZE_KB = 300;
-    const MAX_LOGO_SIZE_BYTES = MAX_LOGO_SIZE_KB * 1024;
+    const MAX_AVATAR_SIZE_KB = 150;
 
     const state = {
         companies: [],
@@ -91,6 +91,10 @@ document.addEventListener("DOMContentLoaded", () => {
         profileAvatarInitials: document.getElementById("profileAvatarInitials"),
         profileName: document.getElementById("profileName"),
         profileEmail: document.getElementById("profileEmail"),
+        profileAvatarFile: document.getElementById("profileAvatarFile"),
+        profileAvatarFileName: document.getElementById("profileAvatarFileName"),
+        profileAvatarError: document.getElementById("profileAvatarError"),
+        removeProfileAvatarBtn: document.getElementById("removeProfileAvatarBtn"),
         openCreateFromProfileBtn: document.getElementById("openCreateFromProfileBtn"),
         logoutBtn: document.getElementById("logoutBtn"),
         myStoresCountLabel: document.getElementById("myStoresCountLabel"),
@@ -107,7 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
         logoUploadError: document.getElementById("logoUploadError"),
         logoUploadPreviewBox: document.getElementById("logoUploadPreviewBox"),
         formLogoPreviewImg: document.getElementById("formLogoPreviewImg"),
-        formLogoAvatarPreviewImg: document.getElementById("formLogoAvatarPreviewImg"),
         removeLogoBtn: document.getElementById("removeLogoBtn"),
         formName: document.getElementById("formName"),
         formCategory: document.getElementById("formCategory"),
@@ -237,17 +240,19 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             el.companyPendingNotice.classList.add("hidden");
         }
+
+        syncUserPhoto();
     }
 
-    function syncUserPhoto(company) {
-        const ownedStore = state.myStores.find((s) => s.logoUrl) || company;
-        const logoUrl = company?.logoUrl || ownedStore?.logoUrl || "";
-        const initials = getInitials(state.user?.name || company?.name || "ES");
+    function syncUserPhoto() {
+        const isLogged = Boolean(state.user && AuthApi.getToken());
+        const avatarUrl = isLogged ? (state.user.avatarUrl || "") : "";
+        const initials = isLogged ? getInitials(state.user.name || "ES") : "ES";
         el.profileAvatarInitials.textContent = initials;
 
-        if (logoUrl) {
-            el.headerUserAvatarImg.src = logoUrl;
-            el.headerUserAvatarImg.alt = `Foto de ${company?.name || "usuário"}`;
+        if (avatarUrl) {
+            el.headerUserAvatarImg.src = avatarUrl;
+            el.headerUserAvatarImg.alt = `Foto de ${state.user?.name || "usuário"}`;
             el.headerUserAvatarImg.classList.remove("hidden");
             el.headerUserDefaultIcon.classList.add("hidden");
             el.headerUserAvatarImg.onerror = () => {
@@ -255,19 +260,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 el.headerUserDefaultIcon.classList.remove("hidden");
             };
 
-            el.profileAvatarImg.src = logoUrl;
-            el.profileAvatarImg.alt = `Foto de ${company?.name || "usuário"}`;
+            el.profileAvatarImg.src = avatarUrl;
+            el.profileAvatarImg.alt = `Foto de ${state.user?.name || "usuário"}`;
             el.profileAvatarImg.classList.remove("hidden");
             el.profileAvatarInitials.classList.add("hidden");
             el.profileAvatarImg.onerror = () => {
                 el.profileAvatarImg.classList.add("hidden");
                 el.profileAvatarInitials.classList.remove("hidden");
             };
+
+            el.removeProfileAvatarBtn.classList.remove("hidden");
+            if (!el.profileAvatarFileName.dataset.customLabel) {
+                el.profileAvatarFileName.textContent = "Foto de perfil salva";
+            }
         } else {
+            el.headerUserAvatarImg.src = "";
             el.headerUserAvatarImg.classList.add("hidden");
             el.headerUserDefaultIcon.classList.remove("hidden");
+            el.profileAvatarImg.src = "";
             el.profileAvatarImg.classList.add("hidden");
             el.profileAvatarInitials.classList.remove("hidden");
+            el.removeProfileAvatarBtn.classList.add("hidden");
+            delete el.profileAvatarFileName.dataset.customLabel;
+            el.profileAvatarFileName.textContent = "Usando iniciais do perfil";
         }
     }
 
@@ -349,7 +364,6 @@ document.addEventListener("DOMContentLoaded", () => {
             el.companyCard.classList.add("hidden");
             el.pagerRow.classList.add("hidden");
             el.emptyState.classList.remove("hidden");
-            syncUserPhoto(null);
             renderUserSessionUI();
             return;
         }
@@ -383,7 +397,6 @@ document.addEventListener("DOMContentLoaded", () => {
             el.companyLogoFallback.classList.remove("hidden");
         }
 
-        syncUserPhoto(company);
         renderUserSessionUI();
 
         const phoneDigits = (company.phone || "").replace(/\D/g, "");
@@ -629,12 +642,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (dataUrl) {
             el.formLogoPreviewImg.src = dataUrl;
-            el.formLogoAvatarPreviewImg.src = dataUrl;
             el.logoUploadPreviewBox.classList.remove("hidden");
             el.logoFileName.textContent = labelText || "Imagem atual carregada";
         } else {
             el.formLogoPreviewImg.src = "";
-            el.formLogoAvatarPreviewImg.src = "";
             el.logoUploadPreviewBox.classList.add("hidden");
             el.logoFileName.textContent = "Nenhum arquivo selecionado";
         }
@@ -673,28 +684,30 @@ document.addEventListener("DOMContentLoaded", () => {
         openModal(el.companyFormModal);
     }
 
-    // Upload de imagem da Logo com validação de tamanho máximo (300 KB) e leitura de resolução
-    el.formLogoFile.addEventListener("change", () => {
-        const file = el.formLogoFile.files?.[0];
+    function processImageUpload(fileInput, errorEl, maxKB, onLoaded) {
+        const file = fileInput.files?.[0];
         if (!file) return;
+
+        errorEl.classList.add("hidden");
+        errorEl.textContent = "";
 
         const validTypes = ["image/jpeg", "image/png", "image/webp"];
         if (!validTypes.includes(file.type)) {
-            el.logoUploadError.textContent = "Formato inválido. Selecione uma imagem JPG, PNG ou WebP.";
-            el.logoUploadError.classList.remove("hidden");
-            el.formLogoFile.value = "";
+            errorEl.textContent = "Formato inválido. Selecione uma imagem JPG, PNG ou WebP.";
+            errorEl.classList.remove("hidden");
+            fileInput.value = "";
             return;
         }
 
         const sizeKB = (file.size / 1024).toFixed(1);
-        if (file.size > MAX_LOGO_SIZE_BYTES) {
-            el.logoUploadError.innerHTML =
-                `⚠️ O arquivo selecionado tem <strong>${sizeKB} KB</strong>, mas o tamanho máximo permitido é de <strong>${MAX_LOGO_SIZE_KB} KB</strong>. ` +
+        if (file.size > maxKB * 1024) {
+            errorEl.innerHTML =
+                `⚠️ O arquivo selecionado tem <strong>${sizeKB} KB</strong>, mas o tamanho máximo permitido é de <strong>${maxKB} KB</strong>. ` +
                 `Comprima a imagem no <a href="https://squoosh.app/" target="_blank" rel="noopener noreferrer">Squoosh</a>, ` +
                 `<a href="https://tinypng.com/" target="_blank" rel="noopener noreferrer">TinyPNG</a> ou ` +
                 `<a href="https://www.iloveimg.com/pt/comprimir-imagem" target="_blank" rel="noopener noreferrer">iLoveIMG</a> e tente novamente.`;
-            el.logoUploadError.classList.remove("hidden");
-            el.formLogoFile.value = "";
+            errorEl.classList.remove("hidden");
+            fileInput.value = "";
             return;
         }
 
@@ -702,16 +715,48 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.onload = () => {
             const dataUrl = reader.result;
             const probe = new Image();
-            probe.onload = () => {
-                const info = `${file.name} (${sizeKB} KB • ${probe.width}×${probe.height} px)`;
-                updateFormLogoPreview(dataUrl, info);
-            };
-            probe.onerror = () => {
-                updateFormLogoPreview(dataUrl, `${file.name} (${sizeKB} KB)`);
-            };
+            probe.onload = () => onLoaded(dataUrl, `${file.name} (${sizeKB} KB • ${probe.width}×${probe.height} px)`);
+            probe.onerror = () => onLoaded(dataUrl, `${file.name} (${sizeKB} KB)`);
             probe.src = dataUrl;
         };
         reader.readAsDataURL(file);
+    }
+
+    // Upload de imagem da Logo da Loja (Vitrine/Carrossel: 800×600 px 4:3, máx. 300 KB)
+    el.formLogoFile.addEventListener("change", () => {
+        processImageUpload(el.formLogoFile, el.logoUploadError, MAX_LOGO_SIZE_KB, (dataUrl, info) => {
+            updateFormLogoPreview(dataUrl, info);
+        });
+    });
+
+    // Upload separado da Foto de Perfil do Usuário (Avatar 1:1 400×400 px, máx. 150 KB)
+    el.profileAvatarFile.addEventListener("change", () => {
+        processImageUpload(el.profileAvatarFile, el.profileAvatarError, MAX_AVATAR_SIZE_KB, async (dataUrl, info) => {
+            try {
+                state.user = await AuthApi.updateAvatar(dataUrl);
+                el.profileAvatarFileName.dataset.customLabel = "true";
+                el.profileAvatarFileName.textContent = info;
+                syncUserPhoto();
+                showToast("Foto de perfil atualizada!");
+            } catch (err) {
+                el.profileAvatarError.textContent = err.message || "Não foi possível salvar a foto de perfil.";
+                el.profileAvatarError.classList.remove("hidden");
+                el.profileAvatarFile.value = "";
+            }
+        });
+    });
+
+    el.removeProfileAvatarBtn.addEventListener("click", async () => {
+        try {
+            state.user = await AuthApi.updateAvatar(null);
+            el.profileAvatarFile.value = "";
+            el.profileAvatarError.classList.add("hidden");
+            delete el.profileAvatarFileName.dataset.customLabel;
+            syncUserPhoto();
+            showToast("Foto de perfil removida.");
+        } catch (err) {
+            showToast(err.message || "Erro ao remover foto de perfil.");
+        }
     });
 
     el.removeLogoBtn.addEventListener("click", () => {
@@ -923,7 +968,6 @@ document.addEventListener("DOMContentLoaded", () => {
         state.myStores = [];
         closeModal(el.profileModal);
         renderUserSessionUI();
-        syncUserPhoto(state.companies[state.currentIndex] || null);
         showToast("Você saiu da conta.");
     });
 

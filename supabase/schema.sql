@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255),
     auth_provider VARCHAR(30) NOT NULL DEFAULT 'LOCAL',
     role VARCHAR(30) NOT NULL DEFAULT 'USER',
+    avatar_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -241,7 +241,7 @@
 
             <div class="profile-summary">
                 <div class="profile-avatar-lg">
-                    <img id="profileAvatarImg" src="" alt="Foto do usuário / loja" class="profile-avatar-img hidden">
+                    <img id="profileAvatarImg" src="" alt="Foto de perfil do usuário" class="profile-avatar-img hidden">
                     <span id="profileAvatarInitials">ES</span>
                 </div>
                 <div class="profile-info-text">
@@ -249,6 +249,33 @@
                     <p id="profileEmail" class="profile-email">usuario@email.com</p>
                     <p class="profile-role-hint">Todas as criações e edições de loja passam pela aprovação do Administrador.</p>
                 </div>
+            </div>
+
+            <!-- Upload separado para Foto de Perfil do Usuário -->
+            <div class="upload-field-group">
+                <span class="field-label">Foto de Perfil do Usuário (separada da logo das lojas)</span>
+
+                <div class="upload-guidelines">
+                    <p><strong>📐 Resolução proporcional recomendada:</strong> <code>400 &times; 400 px</code> (proporção <strong>1:1 quadrada</strong> para encaixe perfeito no avatar circular).</p>
+                    <p><strong>📦 Tamanho máximo do arquivo:</strong> <strong>150 KB</strong> (formatos aceitos: JPG, PNG ou WebP).</p>
+                    <p class="compress-links-row">
+                        <strong>💡 Arquivo muito grande? Reduza sem perder qualidade:</strong>
+                        <a href="https://squoosh.app/" target="_blank" rel="noopener noreferrer">Squoosh</a> &bull;
+                        <a href="https://tinypng.com/" target="_blank" rel="noopener noreferrer">TinyPNG</a> &bull;
+                        <a href="https://www.iloveimg.com/pt/comprimir-imagem" target="_blank" rel="noopener noreferrer">iLoveIMG</a>
+                    </p>
+                </div>
+
+                <div class="upload-control-row">
+                    <label for="profileAvatarFile" class="upload-btn-label">
+                        📷 Alterar foto de perfil
+                    </label>
+                    <input type="file" id="profileAvatarFile" accept="image/png,image/jpeg,image/webp" class="visually-hidden-file">
+                    <span id="profileAvatarFileName" class="logo-file-info">Usando iniciais do perfil</span>
+                    <button type="button" id="removeProfileAvatarBtn" class="btn-remove-logo hidden">Remover foto</button>
+                </div>
+
+                <div id="profileAvatarError" class="logo-upload-error hidden" role="alert"></div>
             </div>
 
             <div class="modal-actions-stack">
@@ -297,12 +324,12 @@
                     </select>
                 </label>
 
-                <!-- Upload de imagem da Logo (usada no carrossel e na foto do usuário) -->
+                <!-- Upload de imagem da Logo da Loja (exclusiva da vitrine / carrossel) -->
                 <div class="upload-field-group">
-                    <span class="field-label">Logo da Empresa (Foto do Carrossel e do Usuário)</span>
+                    <span class="field-label">Logo / Foto da Loja (Vitrine e Carrossel — separada da sua foto de perfil)</span>
 
                     <div class="upload-guidelines">
-                        <p><strong>📐 Resolução proporcional recomendada:</strong> <code>800 &times; 600 px</code> ou <code>1200 &times; 900 px</code> (proporção <strong>4:3</strong> para o carrossel, com ajuste automático na foto de perfil do usuário).</p>
+                        <p><strong>📐 Resolução proporcional recomendada:</strong> <code>800 &times; 600 px</code> ou <code>1200 &times; 900 px</code> (proporção <strong>4:3</strong> exclusiva da vitrine da loja).</p>
                         <p><strong>📦 Tamanho máximo do arquivo:</strong> <strong>300 KB</strong> (formatos aceitos: JPG, PNG ou WebP).</p>
                         <p class="compress-links-row">
                             <strong>💡 Arquivo muito grande? Reduza sem perder qualidade:</strong>
@@ -314,7 +341,7 @@
 
                     <div class="upload-control-row">
                         <label for="formLogoFile" class="upload-btn-label">
-                            📷 Selecionar imagem do dispositivo
+                            📷 Selecionar logo da loja
                         </label>
                         <input type="file" id="formLogoFile" accept="image/png,image/jpeg,image/webp" class="visually-hidden-file">
                         <span id="logoFileName" class="logo-file-info">Nenhum arquivo novo selecionado</span>
@@ -325,12 +352,8 @@
                     <div id="logoUploadPreviewBox" class="logo-preview-box hidden">
                         <div class="logo-preview-pair">
                             <div class="preview-carousel-item">
-                                <span class="preview-caption">Prévia no Carrossel (4:3)</span>
-                                <img id="formLogoPreviewImg" src="" alt="Prévia da logo no carrossel" class="preview-carousel-img">
-                            </div>
-                            <div class="preview-avatar-item">
-                                <span class="preview-caption">Foto do Usuário</span>
-                                <img id="formLogoAvatarPreviewImg" src="" alt="Prévia da foto do usuário" class="preview-avatar-img">
+                                <span class="preview-caption">Prévia na Vitrine / Carrossel (4:3)</span>
+                                <img id="formLogoPreviewImg" src="" alt="Prévia da logo na vitrine" class="preview-carousel-img">
                             </div>
                         </div>
                         <button type="button" id="removeLogoBtn" class="btn-remove-logo">Remover imagem</button>

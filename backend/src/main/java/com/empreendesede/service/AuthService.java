@@ -22,9 +22,12 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class AuthService {
+
+    private static final int MAX_AVATAR_DATA_URL_CHARS = 220_000;
 
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
@@ -247,15 +250,53 @@ public class AuthService {
         return buildAuthResponse(saved);
     }
 
-    private AuthResponse buildAuthResponse(UserAccount user) {
-        String token = tokenService.createToken(user);
-        UserInfo info = new UserInfo(
+    @Transactional(readOnly = true)
+    public UserInfo getUserInfo(UUID userId) {
+        UserAccount user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Sessão inválida."));
+        return toUserInfo(user);
+    }
+
+    @Transactional
+    public UserInfo updateAvatar(UUID userId, String rawAvatarUrl) {
+        UserAccount user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Sessão inválida."));
+
+        String normalized = rawAvatarUrl != null ? rawAvatarUrl.trim() : "";
+        if (normalized.isEmpty()) {
+            user.setAvatarUrl(null);
+        } else {
+            boolean isAllowedDataUrl = normalized.startsWith("data:image/jpeg;base64,")
+                    || normalized.startsWith("data:image/png;base64,")
+                    || normalized.startsWith("data:image/webp;base64,");
+            boolean isHttpUrl = normalized.startsWith("https://") || normalized.startsWith("http://");
+
+            if (!isAllowedDataUrl && !isHttpUrl) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Formato de foto de perfil inválido. Use JPG, PNG ou WebP.");
+            }
+            if (isAllowedDataUrl && normalized.length() > MAX_AVATAR_DATA_URL_CHARS) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "A foto de perfil deve ter no máximo 150 KB.");
+            }
+            user.setAvatarUrl(normalized);
+        }
+
+        UserAccount saved = userRepository.save(user);
+        return toUserInfo(saved);
+    }
+
+    private UserInfo toUserInfo(UserAccount user) {
+        return new UserInfo(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getRole(),
-                user.getAuthProvider()
+                user.getAuthProvider(),
+                user.getAvatarUrl()
         );
-        return new AuthResponse(token, info);
+    }
+
+    private AuthResponse buildAuthResponse(UserAccount user) {
+        String token = tokenService.createToken(user);
+        return new AuthResponse(token, toUserInfo(user));
     }
 }
