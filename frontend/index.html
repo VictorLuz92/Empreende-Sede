@@ -23,12 +23,17 @@
                 Empreende Sede
             </a>
 
-            <button id="profileBtn" class="profile-btn" aria-label="Abrir perfil">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                    <circle cx="12" cy="8" r="4"></circle>
-                    <path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"></path>
-                </svg>
-            </button>
+            <div class="topbar-right">
+                <span id="sessionRoleBadge" class="session-role-badge">Usuário</span>
+                <button id="profileBtn" class="profile-btn" aria-label="Abrir perfil e sessão">
+                    <img id="headerUserAvatarImg" src="" alt="Foto do usuário" class="header-avatar-img hidden">
+                    <svg id="headerUserDefaultIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <circle cx="12" cy="8" r="4"></circle>
+                        <path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"></path>
+                    </svg>
+                    <span id="pendingBadgeCount" class="pending-badge-count hidden" title="Aprovações pendentes">0</span>
+                </button>
+            </div>
         </header>
 
         <!-- Barra de status da conexão (Backend / Modo Demo) -->
@@ -91,6 +96,9 @@
                         </div>
                     </div>
                     <p id="companyDescription" class="company-description"></p>
+                    <div id="companyPendingNotice" class="company-pending-notice hidden">
+                        ⏳ Esta loja possui alterações enviadas pelo usuário aguardando aprovação do Administrador.
+                    </div>
                 </div>
 
                 <!-- Telefone (retângulo menor do wireframe) -->
@@ -156,31 +164,59 @@
         </nav>
     </aside>
 
-    <!-- Modal de Perfil -->
+    <!-- Modal de Perfil e Sessão (Usuário / Administrador) -->
     <div id="profileModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
-        <div class="modal-card">
+        <div class="modal-card modal-card-lg">
             <div class="modal-header">
-                <h2 id="profileModalTitle">Perfil do Empreendedor</h2>
+                <h2 id="profileModalTitle">Sessão &amp; Perfil</h2>
                 <button class="icon-close-btn" data-close-modal="profileModal" aria-label="Fechar">&times;</button>
             </div>
+
+            <!-- Alternador de Sessão: Usuário (Empreendedor) vs Administrador -->
+            <div class="session-switcher" role="tablist" aria-label="Alternar tipo de sessão">
+                <button type="button" id="roleUserBtn" class="session-tab active" role="tab" aria-selected="true">
+                    👤 Usuário (Loja)
+                </button>
+                <button type="button" id="roleAdminBtn" class="session-tab" role="tab" aria-selected="false">
+                    🛡️ Administrador
+                    <span id="adminTabBadge" class="tab-badge hidden">0</span>
+                </button>
+            </div>
+
             <div class="profile-summary">
-                <div class="profile-avatar-lg">ES</div>
-                <div>
-                    <p class="profile-name">Empreendedor Local</p>
-                    <p class="profile-email">contato@empreendesede.com.br</p>
+                <div class="profile-avatar-lg">
+                    <img id="profileAvatarImg" src="" alt="Foto do usuário / loja" class="profile-avatar-img hidden">
+                    <span id="profileAvatarInitials">ES</span>
+                </div>
+                <div class="profile-info-text">
+                    <p id="profileName" class="profile-name">Empreendedor Local (Usuário)</p>
+                    <p id="profileEmail" class="profile-email">Loja ativa sincronizada com a foto do perfil</p>
+                    <p id="profileRoleHint" class="profile-role-hint">Você pode editar a loja; as mudanças ficam pendentes até aprovação do Administrador.</p>
                 </div>
             </div>
+
             <div class="modal-actions-stack">
-                <button id="openCreateFromProfileBtn" class="btn-primary">Cadastrar Nova Empresa</button>
-                <button id="openEditFromProfileBtn" class="btn-secondary">Editar Empresa Exibida</button>
-                <button id="deleteCurrentCompanyBtn" class="btn-danger">Remover Empresa Exibida</button>
+                <button id="openEditFromProfileBtn" class="btn-primary">Editar Loja Exibida</button>
+                <button id="openCreateFromProfileBtn" class="btn-secondary">Cadastrar Nova Empresa</button>
+                <button id="deleteCurrentCompanyBtn" class="btn-danger hidden">Remover Empresa Exibida (Adm)</button>
+            </div>
+
+            <!-- Painel de Aprovações do Administrador -->
+            <div id="adminApprovalSection" class="admin-approval-section hidden">
+                <div class="admin-section-header">
+                    <h3>Aprovações Pendentes</h3>
+                    <span id="pendingCountLabel" class="pending-count-pill">0 pendentes</span>
+                </div>
+                <div id="pendingApprovalsList" class="pending-approvals-list">
+                    <p class="empty-pending-msg">Nenhuma alteração pendente de aprovação no momento.</p>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Modal de Cadastro / Edição de Empresa -->
     <div id="companyFormModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
-        <div class="modal-card">
+        <div class="modal-card modal-card-lg">
             <div class="modal-header">
                 <h2 id="formModalTitle">Cadastrar Empresa</h2>
                 <button class="icon-close-btn" data-close-modal="companyFormModal" aria-label="Fechar">&times;</button>
@@ -188,6 +224,7 @@
 
             <form id="companyForm" class="company-form">
                 <input type="hidden" id="formCompanyId">
+                <input type="hidden" id="formLogoData">
 
                 <label>
                     Nome da Empresa *
@@ -199,10 +236,45 @@
                     <input type="text" id="formCategory" required maxlength="80" placeholder="Ex: Gastronomia, Tecnologia, Serviços">
                 </label>
 
-                <label>
-                    URL da Logo (opcional)
-                    <input type="url" id="formLogoUrl" placeholder="https://...">
-                </label>
+                <!-- Upload de imagem da Logo (usada no carrossel e na foto do usuário) -->
+                <div class="upload-field-group">
+                    <span class="field-label">Logo da Empresa (Foto do Carrossel e do Usuário)</span>
+
+                    <div class="upload-guidelines">
+                        <p><strong>📐 Resolução proporcional recomendada:</strong> <code>800 &times; 600 px</code> ou <code>1200 &times; 900 px</code> (proporção <strong>4:3</strong> para o carrossel, com ajuste automático na foto de perfil do usuário).</p>
+                        <p><strong>📦 Tamanho máximo do arquivo:</strong> <strong>300 KB</strong> (formatos aceitos: JPG, PNG ou WebP).</p>
+                        <p class="compress-links-row">
+                            <strong>💡 Arquivo muito grande? Reduza sem perder qualidade:</strong>
+                            <a href="https://squoosh.app/" target="_blank" rel="noopener noreferrer">Squoosh</a> &bull;
+                            <a href="https://tinypng.com/" target="_blank" rel="noopener noreferrer">TinyPNG</a> &bull;
+                            <a href="https://www.iloveimg.com/pt/comprimir-imagem" target="_blank" rel="noopener noreferrer">iLoveIMG</a>
+                        </p>
+                    </div>
+
+                    <div class="upload-control-row">
+                        <label for="formLogoFile" class="upload-btn-label">
+                            📷 Selecionar imagem do dispositivo
+                        </label>
+                        <input type="file" id="formLogoFile" accept="image/png,image/jpeg,image/webp" class="visually-hidden-file">
+                        <span id="logoFileName" class="logo-file-info">Nenhum arquivo novo selecionado</span>
+                    </div>
+
+                    <div id="logoUploadError" class="logo-upload-error hidden" role="alert"></div>
+
+                    <div id="logoUploadPreviewBox" class="logo-preview-box hidden">
+                        <div class="logo-preview-pair">
+                            <div class="preview-carousel-item">
+                                <span class="preview-caption">Prévia no Carrossel (4:3)</span>
+                                <img id="formLogoPreviewImg" src="" alt="Prévia da logo no carrossel" class="preview-carousel-img">
+                            </div>
+                            <div class="preview-avatar-item">
+                                <span class="preview-caption">Foto do Usuário</span>
+                                <img id="formLogoAvatarPreviewImg" src="" alt="Prévia da foto do usuário" class="preview-avatar-img">
+                            </div>
+                        </div>
+                        <button type="button" id="removeLogoBtn" class="btn-remove-logo">Remover imagem</button>
+                    </div>
+                </div>
 
                 <label>
                     Descrição da Empresa *
@@ -225,9 +297,13 @@
                     <input type="text" id="formInstagram" maxlength="120" placeholder="suaempresa.oficial">
                 </label>
 
+                <div id="formApprovalNotice" class="form-approval-notice">
+                    ℹ️ Sessão atual: <strong>Usuário</strong>. Ao salvar, as alterações serão enviadas para aprovação do <strong>Administrador</strong> antes de irem ao ar.
+                </div>
+
                 <div class="form-footer">
                     <button type="button" class="btn-secondary" data-close-modal="companyFormModal">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar</button>
+                    <button type="submit" id="formSubmitBtn" class="btn-primary">Enviar para Aprovação</button>
                 </div>
             </form>
         </div>
