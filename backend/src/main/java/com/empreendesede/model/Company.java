@@ -44,11 +44,29 @@ public class Company {
     @Column(name = "owner_id")
     private UUID ownerId;
 
+    @Column(name = "owner_email", length = 180)
+    private String ownerEmail;
+
     @Column(nullable = false)
     private boolean active = true;
 
     @Column(nullable = false)
     private boolean approved = true;
+
+    @Column(name = "payment_status", nullable = false, length = 30)
+    private String paymentStatus = "PAID";
+
+    @Column(name = "pix_tx_id", length = 120)
+    private String pixTxId;
+
+    @Column(name = "pix_payer_note", length = 255)
+    private String pixPayerNote;
+
+    @Column(name = "pending_renewal", nullable = false)
+    private boolean pendingRenewal = false;
+
+    @Column(name = "subscription_expires_at")
+    private OffsetDateTime subscriptionExpiresAt;
 
     @Column(name = "has_pending_update", nullable = false)
     private boolean hasPendingUpdate = false;
@@ -178,6 +196,54 @@ public class Company {
 
     public void setApproved(boolean approved) {
         this.approved = approved;
+    }
+
+    public String getOwnerEmail() {
+        return ownerEmail;
+    }
+
+    public void setOwnerEmail(String ownerEmail) {
+        this.ownerEmail = ownerEmail;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public String getPixTxId() {
+        return pixTxId;
+    }
+
+    public void setPixTxId(String pixTxId) {
+        this.pixTxId = pixTxId;
+    }
+
+    public String getPixPayerNote() {
+        return pixPayerNote;
+    }
+
+    public void setPixPayerNote(String pixPayerNote) {
+        this.pixPayerNote = pixPayerNote;
+    }
+
+    public boolean isPendingRenewal() {
+        return pendingRenewal;
+    }
+
+    public void setPendingRenewal(boolean pendingRenewal) {
+        this.pendingRenewal = pendingRenewal;
+    }
+
+    public OffsetDateTime getSubscriptionExpiresAt() {
+        return subscriptionExpiresAt;
+    }
+
+    public void setSubscriptionExpiresAt(OffsetDateTime subscriptionExpiresAt) {
+        this.subscriptionExpiresAt = subscriptionExpiresAt;
     }
 
     public boolean isHasPendingUpdate() {

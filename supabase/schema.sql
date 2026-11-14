@@ -7,6 +7,20 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- -----------------------------------------------------------------------------
+-- Tabela de Usuários (Login por e-mail/senha ou OAuth Google/Microsoft)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(120) NOT NULL,
+    email VARCHAR(180) NOT NULL UNIQUE,
+    password_hash VARCHAR(255),
+    auth_provider VARCHAR(30) NOT NULL DEFAULT 'LOCAL',
+    role VARCHAR(30) NOT NULL DEFAULT 'USER',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- -----------------------------------------------------------------------------
 -- Tabela de Perfis de Usuários (integrada ou independente do Supabase Auth)
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS profiles (
@@ -31,8 +45,23 @@ CREATE TABLE IF NOT EXISTS companies (
     phone VARCHAR(30) NOT NULL,
     whatsapp VARCHAR(30),
     instagram VARCHAR(120),
-    owner_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    owner_email VARCHAR(180),
     active BOOLEAN NOT NULL DEFAULT TRUE,
+    approved BOOLEAN NOT NULL DEFAULT TRUE,
+    payment_status VARCHAR(30) NOT NULL DEFAULT 'PAID',
+    pix_tx_id VARCHAR(120),
+    pix_payer_note VARCHAR(255),
+    pending_renewal BOOLEAN NOT NULL DEFAULT FALSE,
+    subscription_expires_at TIMESTAMPTZ,
+    has_pending_update BOOLEAN NOT NULL DEFAULT FALSE,
+    pending_name VARCHAR(150),
+    pending_category VARCHAR(80),
+    pending_logo_url TEXT,
+    pending_description TEXT,
+    pending_phone VARCHAR(30),
+    pending_whatsapp VARCHAR(30),
+    pending_instagram VARCHAR(120),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
