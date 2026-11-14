@@ -1234,6 +1234,214 @@ body {
     background: #fecaca;
 }
 
+.btn-sm {
+    padding: 7px 12px;
+    font-size: 0.82rem;
+}
+
+.session-action-pill {
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.session-action-pill:hover,
+.session-action-pill.is-logged {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Modal de Autenticação (E-mail/Senha + Google + Microsoft) */
+.auth-subtitle {
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+.oauth-buttons-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.oauth-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.oauth-btn:hover {
+    background: var(--bg-subtle);
+    border-color: var(--border-strong);
+}
+
+.oauth-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.oauth-google .oauth-icon {
+    background: #ea4335;
+}
+
+.oauth-microsoft .oauth-icon {
+    background: #0078d4;
+}
+
+.google-gsi-slot {
+    display: flex;
+    justify-content: center;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+/* Status das Lojas do Usuário */
+.status-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+}
+
+.status-ok {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-warn {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Modal de Pagamento Pix */
+.pix-summary-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.86rem;
+}
+
+.pix-qr-box {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 14px;
+    align-items: center;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.pix-qr-wrap {
+    width: 160px;
+    height: 160px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 0.78rem;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.pix-qr-wrap svg {
+    width: 100%;
+    height: 100%;
+}
+
+.pix-copy-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.pix-key-info {
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.pix-code-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.pix-code-label textarea {
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 7px 9px;
+    font-size: 0.74rem;
+    font-family: monospace;
+    resize: none;
+    background: var(--bg-surface);
+}
+
+@media (max-width: 520px) {
+    .pix-qr-box {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+    .pix-copy-col {
+        width: 100%;
+    }
+}
+
 /* Toast */
 .toast {
     position: fixed;

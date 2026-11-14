@@ -1,4 +1,10 @@
-const API_BASE_URL = window.API_BASE_URL || "http://localhost:8080/api/companies";
+const API_ORIGIN = window.API_ORIGIN || "http://localhost:8080";
+const API_BASE_URL = `${API_ORIGIN}/api/companies`;
+const AUTH_BASE_URL = `${API_ORIGIN}/api/auth`;
+const ADMIN_BASE_URL = `${API_ORIGIN}/api/admin`;
+
+const USER_TOKEN_KEY = "empreende_sede_user_token";
+const USER_INFO_KEY = "empreende_sede_user_info";
 const STORAGE_KEY = "empreende_sede_demo_companies";
 
 const SEED_COMPANIES = [
@@ -12,8 +18,7 @@ const SEED_COMPANIES = [
         whatsapp: "5511987654321",
         instagram: "cafeprosa.artesanal",
         approved: true,
-        hasPendingUpdate: false,
-        pendingData: null
+        paymentStatus: "EXEMPT"
     },
     {
         id: "demo-2",
@@ -25,8 +30,7 @@ const SEED_COMPANIES = [
         whatsapp: "5511912345678",
         instagram: "sedetech.oficial",
         approved: true,
-        hasPendingUpdate: false,
-        pendingData: null
+        paymentStatus: "EXEMPT"
     },
     {
         id: "demo-3",
@@ -38,8 +42,7 @@ const SEED_COMPANIES = [
         whatsapp: "5511998877665",
         instagram: "estudioraiz.design",
         approved: true,
-        hasPendingUpdate: false,
-        pendingData: null
+        paymentStatus: "EXEMPT"
     },
     {
         id: "demo-4",
@@ -51,8 +54,7 @@ const SEED_COMPANIES = [
         whatsapp: "5511977665544",
         instagram: "verdevida.organicos",
         approved: true,
-        hasPendingUpdate: false,
-        pendingData: null
+        paymentStatus: "EXEMPT"
     }
 ];
 
@@ -63,20 +65,130 @@ function loadDemoCompanies() {
         return [...SEED_COMPANIES];
     }
     try {
-        return JSON.parse(raw).map((c) => ({
-            approved: true,
-            hasPendingUpdate: false,
-            pendingData: null,
-            ...c
-        }));
+        return JSON.parse(raw);
     } catch {
         return [...SEED_COMPANIES];
     }
 }
 
-function saveDemoCompanies(list) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+async function parseError(response, fallbackMsg) {
+    try {
+        const body = await response.json();
+        if (body?.fields) {
+            const first = Object.values(body.fields)[0];
+            if (first) return String(first);
+        }
+        if (body?.error) return String(body.error);
+    } catch {
+        // ignore parse failure
+    }
+    return fallbackMsg;
 }
+
+const AuthApi = {
+    getToken() {
+        return localStorage.getItem(USER_TOKEN_KEY) || "";
+    },
+
+    getUser() {
+        try {
+            const raw = localStorage.getItem(USER_INFO_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    },
+
+    saveSession(authResp) {
+        localStorage.setItem(USER_TOKEN_KEY, authResp.token);
+        localStorage.setItem(USER_INFO_KEY, JSON.stringify(authResp.user));
+    },
+
+    clearSession() {
+        localStorage.removeItem(USER_TOKEN_KEY);
+        localStorage.removeItem(USER_INFO_KEY);
+    },
+
+    authHeaders(extra = {}) {
+        const token = this.getToken();
+        return token
+            ? { ...extra, Authorization: `Bearer ${token}` }
+            : { ...extra };
+    },
+
+    async getProviders() {
+        const response = await fetch(`${AUTH_BASE_URL}/providers`);
+        if (!response.ok) throw new Error("Não foi possível carregar configurações de autenticação.");
+        return await response.json();
+    },
+
+    async register(payload) {
+        const response = await fetch(`${AUTH_BASE_URL}/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao criar conta."));
+        const data = await response.json();
+        this.saveSession(data);
+        return data;
+    },
+
+    async login(payload) {
+        const response = await fetch(`${AUTH_BASE_URL}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao fazer login."));
+        const data = await response.json();
+        this.saveSession(data);
+        return data;
+    },
+
+    async loginWithGoogle(idToken) {
+        const response = await fetch(`${AUTH_BASE_URL}/oauth/google`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: idToken })
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha na autenticação com Google."));
+        const data = await response.json();
+        this.saveSession(data);
+        return data;
+    },
+
+    async loginWithMicrosoft(accessToken) {
+        const response = await fetch(`${AUTH_BASE_URL}/oauth/microsoft`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: accessToken })
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha na autenticação com Microsoft."));
+        const data = await response.json();
+        this.saveSession(data);
+        return data;
+    },
+
+    async verifySession() {
+        const token = this.getToken();
+        if (!token) return null;
+        try {
+            const response = await fetch(`${AUTH_BASE_URL}/me`, {
+                headers: this.authHeaders()
+            });
+            if (!response.ok) {
+                this.clearSession();
+                return null;
+            }
+            const user = await response.json();
+            localStorage.setItem(USER_INFO_KEY, JSON.stringify(user));
+            return user;
+        } catch {
+            return this.getUser();
+        }
+    }
+};
 
 const CompanyApi = {
     isDemoMode: false,
@@ -99,7 +211,6 @@ const CompanyApi = {
             const cat = category.trim().toLowerCase();
             return loadDemoCompanies()
                 .filter((c) => {
-                    if (c.approved === false) return false;
                     const matchCat = !cat || (c.category || "").toLowerCase() === cat;
                     const matchQ = !q
                         || (c.name || "").toLowerCase().includes(q)
@@ -117,160 +228,46 @@ const CompanyApi = {
             if (!response.ok) throw new Error("Erro ao buscar categorias");
             return await response.json();
         } catch {
-            const categories = new Set(
-                loadDemoCompanies()
-                    .filter((c) => c.approved !== false)
-                    .map((c) => c.category || "Geral")
-            );
+            const categories = new Set(loadDemoCompanies().map((c) => c.category || "Geral"));
             return Array.from(categories).sort((a, b) => a.localeCompare(b, "pt-BR"));
         }
     },
 
-    async listPending() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/pending`);
-            if (!response.ok) throw new Error("Erro ao buscar aprovações pendentes");
-            return await response.json();
-        } catch {
-            return loadDemoCompanies().filter((c) => c.approved === false || c.hasPendingUpdate === true);
-        }
+    async listMine() {
+        const response = await fetch(`${API_BASE_URL}/mine`, {
+            headers: AuthApi.authHeaders()
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao carregar suas lojas."));
+        return await response.json();
     },
 
-    async create(payload, role = "USER") {
-        const isAdmin = role.toUpperCase() === "ADMIN";
-        try {
-            const response = await fetch(`${API_BASE_URL}?role=${encodeURIComponent(role)}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error("Falha ao cadastrar empresa");
-            this.isDemoMode = false;
-            return await response.json();
-        } catch (err) {
-            if (!this.isDemoMode) throw err;
-            const list = loadDemoCompanies();
-            const created = {
-                ...payload,
-                id: `demo-${Date.now()}`,
-                whatsapp: (payload.whatsapp || "").replace(/\D/g, "") || null,
-                instagram: (payload.instagram || "").replace(/^@/, "") || null,
-                approved: isAdmin,
-                hasPendingUpdate: false,
-                pendingData: null
-            };
-            list.push(created);
-            saveDemoCompanies(list);
-            return created;
-        }
+    async create(payload) {
+        const response = await fetch(API_BASE_URL, {
+            method: "POST",
+            headers: AuthApi.authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao cadastrar loja."));
+        return await response.json();
     },
 
-    async update(id, payload, role = "USER") {
-        const isAdmin = role.toUpperCase() === "ADMIN";
-        try {
-            const response = await fetch(`${API_BASE_URL}/${id}?role=${encodeURIComponent(role)}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error("Falha ao atualizar empresa");
-            this.isDemoMode = false;
-            return await response.json();
-        } catch (err) {
-            if (!this.isDemoMode) throw err;
-            const list = loadDemoCompanies();
-            const index = list.findIndex((c) => c.id === id);
-            if (index === -1) throw new Error("Empresa não encontrada");
-
-            const sanitized = {
-                name: payload.name,
-                category: payload.category || "Geral",
-                logoUrl: payload.logoUrl || null,
-                description: payload.description,
-                phone: payload.phone,
-                whatsapp: (payload.whatsapp || "").replace(/\D/g, "") || null,
-                instagram: (payload.instagram || "").replace(/^@/, "") || null
-            };
-
-            if (isAdmin) {
-                list[index] = {
-                    ...list[index],
-                    ...sanitized,
-                    approved: true,
-                    hasPendingUpdate: false,
-                    pendingData: null
-                };
-            } else {
-                list[index] = {
-                    ...list[index],
-                    hasPendingUpdate: true,
-                    pendingData: sanitized
-                };
-            }
-            saveDemoCompanies(list);
-            return list[index];
-        }
+    async update(id, payload) {
+        const response = await fetch(`${API_BASE_URL}/${id}`, {
+            method: "PUT",
+            headers: AuthApi.authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao enviar edição da loja."));
+        return await response.json();
     },
 
-    async approve(id) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/${id}/approve`, {
-                method: "POST"
-            });
-            if (!response.ok) throw new Error("Falha ao aprovar alterações");
-            this.isDemoMode = false;
-            return await response.json();
-        } catch (err) {
-            if (!this.isDemoMode) throw err;
-            const list = loadDemoCompanies();
-            const index = list.findIndex((c) => c.id === id);
-            if (index === -1) throw new Error("Empresa não encontrada");
-            const current = list[index];
-            const applied = current.hasPendingUpdate && current.pendingData
-                ? { ...current, ...current.pendingData }
-                : { ...current };
-            applied.approved = true;
-            applied.hasPendingUpdate = false;
-            applied.pendingData = null;
-            list[index] = applied;
-            saveDemoCompanies(list);
-            return applied;
-        }
-    },
-
-    async reject(id) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/${id}/reject`, {
-                method: "POST"
-            });
-            if (!response.ok) throw new Error("Falha ao rejeitar alterações");
-            this.isDemoMode = false;
-        } catch (err) {
-            if (!this.isDemoMode) throw err;
-            const list = loadDemoCompanies();
-            const index = list.findIndex((c) => c.id === id);
-            if (index === -1) return;
-            if (list[index].approved === false) {
-                list.splice(index, 1);
-            } else {
-                list[index].hasPendingUpdate = false;
-                list[index].pendingData = null;
-            }
-            saveDemoCompanies(list);
-        }
-    },
-
-    async remove(id) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/${id}`, {
-                method: "DELETE"
-            });
-            if (!response.ok) throw new Error("Falha ao remover empresa");
-            this.isDemoMode = false;
-        } catch (err) {
-            if (!this.isDemoMode) throw err;
-            const list = loadDemoCompanies().filter((c) => c.id !== id);
-            saveDemoCompanies(list);
-        }
+    async submitPixProof(id, payload) {
+        const response = await fetch(`${API_BASE_URL}/${id}/pix-proof`, {
+            method: "POST",
+            headers: AuthApi.authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await parseError(response, "Falha ao enviar comprovante Pix."));
+        return await response.json();
     }
 };

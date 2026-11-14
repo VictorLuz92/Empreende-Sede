@@ -1,16 +1,25 @@
 document.addEventListener("DOMContentLoaded", () => {
     const MAX_LOGO_SIZE_KB = 300;
     const MAX_LOGO_SIZE_BYTES = MAX_LOGO_SIZE_KB * 1024;
-    const ROLE_STORAGE_KEY = "empreende_sede_session_role";
 
     const state = {
         companies: [],
         categories: [],
-        pendingList: [],
+        myStores: [],
         currentIndex: 0,
         searchQuery: "",
         selectedCategory: "",
-        role: localStorage.getItem(ROLE_STORAGE_KEY) || "USER"
+        user: AuthApi.getUser(),
+        providers: {
+            googleEnabled: false,
+            googleClientId: "",
+            microsoftEnabled: false,
+            microsoftClientId: "",
+            pixKey: "",
+            pixMonthlyAmount: "50.00",
+            pixDurationDays: 30
+        },
+        pendingActionAfterAuth: null
     };
 
     const el = {
@@ -19,11 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
         menuDrawer: document.getElementById("menuDrawer"),
         drawerBackdrop: document.getElementById("drawerBackdrop"),
         logoBtn: document.getElementById("logoBtn"),
+        headerAuthBtn: document.getElementById("headerAuthBtn"),
         profileBtn: document.getElementById("profileBtn"),
-        sessionRoleBadge: document.getElementById("sessionRoleBadge"),
         headerUserAvatarImg: document.getElementById("headerUserAvatarImg"),
         headerUserDefaultIcon: document.getElementById("headerUserDefaultIcon"),
-        pendingBadgeCount: document.getElementById("pendingBadgeCount"),
         connectionBanner: document.getElementById("connectionBanner"),
 
         searchInput: document.getElementById("searchInput"),
@@ -55,22 +63,35 @@ document.addEventListener("DOMContentLoaded", () => {
         editCompanyBtn: document.getElementById("editCompanyBtn"),
 
         newCompanyMenuBtn: document.getElementById("newCompanyMenuBtn"),
+
+        // Auth Modal
+        authModal: document.getElementById("authModal"),
+        googleLoginBtn: document.getElementById("googleLoginBtn"),
+        microsoftLoginBtn: document.getElementById("microsoftLoginBtn"),
+        googleButtonContainer: document.getElementById("googleButtonContainer"),
+        authTabLogin: document.getElementById("authTabLogin"),
+        authTabRegister: document.getElementById("authTabRegister"),
+        authErrorBox: document.getElementById("authErrorBox"),
+        loginForm: document.getElementById("loginForm"),
+        loginEmail: document.getElementById("loginEmail"),
+        loginPassword: document.getElementById("loginPassword"),
+        registerForm: document.getElementById("registerForm"),
+        registerName: document.getElementById("registerName"),
+        registerEmail: document.getElementById("registerEmail"),
+        registerPassword: document.getElementById("registerPassword"),
+
+        // Profile / My Stores Modal
         profileModal: document.getElementById("profileModal"),
-        roleUserBtn: document.getElementById("roleUserBtn"),
-        roleAdminBtn: document.getElementById("roleAdminBtn"),
-        adminTabBadge: document.getElementById("adminTabBadge"),
         profileAvatarImg: document.getElementById("profileAvatarImg"),
         profileAvatarInitials: document.getElementById("profileAvatarInitials"),
         profileName: document.getElementById("profileName"),
         profileEmail: document.getElementById("profileEmail"),
-        profileRoleHint: document.getElementById("profileRoleHint"),
         openCreateFromProfileBtn: document.getElementById("openCreateFromProfileBtn"),
-        openEditFromProfileBtn: document.getElementById("openEditFromProfileBtn"),
-        deleteCurrentCompanyBtn: document.getElementById("deleteCurrentCompanyBtn"),
-        adminApprovalSection: document.getElementById("adminApprovalSection"),
-        pendingCountLabel: document.getElementById("pendingCountLabel"),
-        pendingApprovalsList: document.getElementById("pendingApprovalsList"),
+        logoutBtn: document.getElementById("logoutBtn"),
+        myStoresCountLabel: document.getElementById("myStoresCountLabel"),
+        myStoresList: document.getElementById("myStoresList"),
 
+        // Company Form Modal
         companyFormModal: document.getElementById("companyFormModal"),
         formModalTitle: document.getElementById("formModalTitle"),
         companyForm: document.getElementById("companyForm"),
@@ -92,6 +113,19 @@ document.addEventListener("DOMContentLoaded", () => {
         formApprovalNotice: document.getElementById("formApprovalNotice"),
         formSubmitBtn: document.getElementById("formSubmitBtn"),
 
+        // Pix Modal
+        pixModal: document.getElementById("pixModal"),
+        pixStoreNameLabel: document.getElementById("pixStoreNameLabel"),
+        pixQrCanvasWrap: document.getElementById("pixQrCanvasWrap"),
+        pixKeyDisplay: document.getElementById("pixKeyDisplay"),
+        pixCopiaColaText: document.getElementById("pixCopiaColaText"),
+        copyPixCodeBtn: document.getElementById("copyPixCodeBtn"),
+        pixProofForm: document.getElementById("pixProofForm"),
+        pixCompanyId: document.getElementById("pixCompanyId"),
+        pixIsRenewal: document.getElementById("pixIsRenewal"),
+        pixTxIdInput: document.getElementById("pixTxIdInput"),
+        pixPayerNoteInput: document.getElementById("pixPayerNoteInput"),
+
         toast: document.getElementById("toast")
     };
 
@@ -104,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => {
             el.toast.classList.add("hidden");
-        }, 3200);
+        }, 3400);
     }
 
     function openDrawer() {
@@ -135,57 +169,80 @@ document.addEventListener("DOMContentLoaded", () => {
         return (parts[0][0] + parts[1][0]).toUpperCase();
     }
 
-    function setRole(newRole) {
-        state.role = newRole === "ADMIN" ? "ADMIN" : "USER";
-        localStorage.setItem(ROLE_STORAGE_KEY, state.role);
-        renderSessionUI();
+    function showAuthError(msg) {
+        if (!msg) {
+            el.authErrorBox.classList.add("hidden");
+            el.authErrorBox.textContent = "";
+            return;
+        }
+        el.authErrorBox.textContent = msg;
+        el.authErrorBox.classList.remove("hidden");
     }
 
-    function renderSessionUI() {
-        const isAdmin = state.role === "ADMIN";
-        const currentCompany = state.companies[state.currentIndex];
+    function switchAuthTab(mode) {
+        showAuthError("");
+        const isLogin = mode === "login";
+        el.authTabLogin.classList.toggle("active", isLogin);
+        el.authTabLogin.setAttribute("aria-selected", String(isLogin));
+        el.authTabRegister.classList.toggle("active", !isLogin);
+        el.authTabRegister.setAttribute("aria-selected", String(!isLogin));
+        el.loginForm.classList.toggle("hidden", !isLogin);
+        el.registerForm.classList.toggle("hidden", isLogin);
+    }
 
-        el.sessionRoleBadge.textContent = isAdmin ? "🛡️ Admin" : "👤 Usuário";
-        el.sessionRoleBadge.classList.toggle("is-admin", isAdmin);
+    function openAuthModal(afterAuthCallback = null) {
+        state.pendingActionAfterAuth = afterAuthCallback;
+        switchAuthTab("login");
+        openModal(el.authModal);
+    }
 
-        el.roleUserBtn.classList.toggle("active", !isAdmin);
-        el.roleUserBtn.setAttribute("aria-selected", String(!isAdmin));
-        el.roleAdminBtn.classList.toggle("active", isAdmin);
-        el.roleAdminBtn.setAttribute("aria-selected", String(isAdmin));
+    async function onAuthenticated(authResponse) {
+        state.user = authResponse.user;
+        closeModal(el.authModal);
+        showToast(`Bem-vindo(a), ${state.user.name}!`);
+        await refreshMyStores();
+        renderUserSessionUI();
 
-        if (isAdmin) {
-            el.profileName.textContent = "Administrador do Portal";
-            el.profileEmail.textContent = "admin@empreendesede.com.br";
-            el.profileRoleHint.textContent = "Você pode aprovar ou rejeitar edições enviadas pelos usuários e publicar alterações imediatamente.";
-            el.deleteCurrentCompanyBtn.classList.remove("hidden");
-            el.adminApprovalSection.classList.remove("hidden");
-            el.formApprovalNotice.innerHTML = "🛡️ Sessão atual: <strong>Administrador</strong>. Suas alterações serão publicadas imediatamente.";
-            el.formApprovalNotice.classList.add("is-admin-notice");
-            el.formSubmitBtn.textContent = "Salvar e Publicar";
+        if (typeof state.pendingActionAfterAuth === "function") {
+            const cb = state.pendingActionAfterAuth;
+            state.pendingActionAfterAuth = null;
+            cb();
+        }
+    }
+
+    function renderUserSessionUI() {
+        const isLogged = Boolean(state.user && AuthApi.getToken());
+        if (isLogged) {
+            const firstName = (state.user.name || "Conta").split(/\s+/)[0];
+            el.headerAuthBtn.textContent = `👤 ${firstName}`;
+            el.headerAuthBtn.classList.add("is-logged");
+            el.profileName.textContent = state.user.name;
+            el.profileEmail.textContent = state.user.email;
         } else {
-            el.profileName.textContent = currentCompany
-                ? `Usuário — ${currentCompany.name}`
-                : "Empreendedor Local (Usuário)";
-            el.profileEmail.textContent = "empreendedor@empreendesede.com.br";
-            el.profileRoleHint.textContent = "Você pode editar os dados e a logo da loja. As mudanças precisam ser aprovadas pelo Administrador.";
-            el.deleteCurrentCompanyBtn.classList.add("hidden");
-            el.adminApprovalSection.classList.add("hidden");
-            el.formApprovalNotice.innerHTML = "ℹ️ Sessão atual: <strong>Usuário</strong>. Ao salvar, as alterações ficarão pendentes até a aprovação do <strong>Administrador</strong>.";
-            el.formApprovalNotice.classList.remove("is-admin-notice");
-            el.formSubmitBtn.textContent = "Enviar para Aprovação";
+            el.headerAuthBtn.textContent = "Entrar";
+            el.headerAuthBtn.classList.remove("is-logged");
         }
 
-        renderPendingApprovals();
+        const currentCompany = state.companies[state.currentIndex];
+        const canEditCurrent = isLogged && currentCompany && currentCompany.ownerId === state.user.id;
+        el.editCompanyBtn.classList.toggle("hidden", !canEditCurrent);
+
+        if (currentCompany && currentCompany.hasPendingUpdate && canEditCurrent) {
+            el.companyPendingNotice.classList.remove("hidden");
+        } else {
+            el.companyPendingNotice.classList.add("hidden");
+        }
     }
 
     function syncUserPhoto(company) {
-        const logoUrl = company?.logoUrl || "";
-        const initials = getInitials(company?.name || "ES");
+        const ownedStore = state.myStores.find((s) => s.logoUrl) || company;
+        const logoUrl = company?.logoUrl || ownedStore?.logoUrl || "";
+        const initials = getInitials(state.user?.name || company?.name || "ES");
         el.profileAvatarInitials.textContent = initials;
 
         if (logoUrl) {
             el.headerUserAvatarImg.src = logoUrl;
-            el.headerUserAvatarImg.alt = `Foto de ${company.name}`;
+            el.headerUserAvatarImg.alt = `Foto de ${company?.name || "usuário"}`;
             el.headerUserAvatarImg.classList.remove("hidden");
             el.headerUserDefaultIcon.classList.add("hidden");
             el.headerUserAvatarImg.onerror = () => {
@@ -194,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             el.profileAvatarImg.src = logoUrl;
-            el.profileAvatarImg.alt = `Foto de ${company.name}`;
+            el.profileAvatarImg.alt = `Foto de ${company?.name || "usuário"}`;
             el.profileAvatarImg.classList.remove("hidden");
             el.profileAvatarInitials.classList.add("hidden");
             el.profileAvatarImg.onerror = () => {
@@ -211,7 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderConnectionBanner() {
         if (CompanyApi.isDemoMode) {
-            el.connectionBanner.textContent = "Modo demonstração offline (inicie a API Spring Boot na porta 8080 para sincronizar com o banco).";
+            el.connectionBanner.textContent = "Modo demonstração offline (inicie a API Spring Boot na porta 8080 para login, Pix e banco de dados).";
             el.connectionBanner.classList.remove("hidden");
         } else {
             el.connectionBanner.classList.add("hidden");
@@ -249,7 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
         state.companies.forEach((company, idx) => {
             const chip = document.createElement("button");
             chip.className = `result-chip ${idx === state.currentIndex ? "active" : ""}`;
-            chip.textContent = company.hasPendingUpdate ? `${company.name} ⏳` : company.name;
+            chip.textContent = company.name;
             chip.addEventListener("click", () => {
                 state.currentIndex = idx;
                 renderActiveCompany();
@@ -265,7 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
             el.pagerRow.classList.add("hidden");
             el.emptyState.classList.remove("hidden");
             syncUserPhoto(null);
-            renderSessionUI();
+            renderUserSessionUI();
             return;
         }
 
@@ -284,12 +341,6 @@ document.addEventListener("DOMContentLoaded", () => {
         el.companyCategoryBadge.textContent = company.category || "Geral";
         el.companyInitials.textContent = getInitials(company.name);
 
-        if (company.hasPendingUpdate) {
-            el.companyPendingNotice.classList.remove("hidden");
-        } else {
-            el.companyPendingNotice.classList.add("hidden");
-        }
-
         if (company.logoUrl) {
             el.companyLogoImg.src = company.logoUrl;
             el.companyLogoImg.alt = `Logo de ${company.name}`;
@@ -305,7 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         syncUserPhoto(company);
-        renderSessionUI();
+        renderUserSessionUI();
 
         const phoneDigits = (company.phone || "").replace(/\D/g, "");
         el.companyPhoneText.textContent = company.phone || "Não informado";
@@ -335,121 +386,167 @@ document.addEventListener("DOMContentLoaded", () => {
         el.nextCompanyBtn.disabled = state.currentIndex === state.companies.length - 1;
     }
 
-    function renderPendingApprovals() {
-        const count = state.pendingList.length;
-
-        if (count > 0) {
-            el.pendingBadgeCount.textContent = String(count);
-            el.pendingBadgeCount.classList.remove("hidden");
-            el.adminTabBadge.textContent = String(count);
-            el.adminTabBadge.classList.remove("hidden");
-        } else {
-            el.pendingBadgeCount.classList.add("hidden");
-            el.adminTabBadge.classList.add("hidden");
+    function formatPaymentBadge(store) {
+        if (store.paymentStatus === "PENDING_PAYMENT") {
+            return { text: "Aguardando Pix R$ 50,00", cls: "status-warn" };
         }
+        if (store.paymentStatus === "PAYMENT_SUBMITTED") {
+            return { text: "Pix enviado • Aguardando Adm", cls: "status-info" };
+        }
+        if (store.expired || store.paymentStatus === "EXPIRED") {
+            return { text: "Plano expirado • Renovar R$ 50,00", cls: "status-danger" };
+        }
+        if (!store.approved) {
+            return { text: "Aguardando aprovação do Adm", cls: "status-info" };
+        }
+        if (store.hasPendingUpdate) {
+            return { text: "Edição aguardando Adm", cls: "status-info" };
+        }
+        if (store.daysRemaining != null) {
+            return { text: `Ativa • ${store.daysRemaining} dia(s) restantes`, cls: "status-ok" };
+        }
+        return { text: "Ativa na vitrine", cls: "status-ok" };
+    }
 
-        el.pendingCountLabel.textContent = count === 1 ? "1 pendente" : `${count} pendentes`;
-        el.pendingApprovalsList.innerHTML = "";
+    function renderMyStores() {
+        const count = state.myStores.length;
+        el.myStoresCountLabel.textContent = count === 1 ? "1 loja" : `${count} lojas`;
+        el.myStoresList.innerHTML = "";
 
         if (count === 0) {
-            const emptyP = document.createElement("p");
-            emptyP.className = "empty-pending-msg";
-            emptyP.textContent = "Nenhuma alteração pendente de aprovação no momento.";
-            el.pendingApprovalsList.appendChild(emptyP);
+            const p = document.createElement("p");
+            p.className = "empty-pending-msg";
+            p.textContent = "Você ainda não cadastrou nenhuma loja. Clique acima para começar por R$ 50,00/mês.";
+            el.myStoresList.appendChild(p);
             return;
         }
 
-        state.pendingList.forEach((item) => {
-            const isEdit = item.hasPendingUpdate && item.pendingData;
-            const data = isEdit ? item.pendingData : item;
-
+        state.myStores.forEach((store) => {
+            const status = formatPaymentBadge(store);
             const card = document.createElement("div");
             card.className = "pending-item-card";
 
             const header = document.createElement("div");
             header.className = "pending-item-header";
-
-            const typeBadge = document.createElement("span");
-            typeBadge.className = `pending-type-badge ${isEdit ? "is-edit" : "is-create"}`;
-            typeBadge.textContent = isEdit ? "Edição de Loja" : "Nova Loja";
-
-            const storeTitle = document.createElement("strong");
-            storeTitle.textContent = isEdit ? `${item.name} → ${data.name}` : data.name;
-
-            header.appendChild(typeBadge);
-            header.appendChild(storeTitle);
+            const badge = document.createElement("span");
+            badge.className = `status-pill ${status.cls}`;
+            badge.textContent = status.text;
+            const title = document.createElement("strong");
+            title.textContent = store.name;
+            header.appendChild(title);
+            header.appendChild(badge);
 
             const body = document.createElement("div");
             body.className = "pending-item-body";
-
-            if (data.logoUrl) {
-                const thumb = document.createElement("img");
-                thumb.src = data.logoUrl;
-                thumb.alt = `Logo proposta para ${data.name}`;
-                thumb.className = "pending-thumb-img";
-                body.appendChild(thumb);
+            if (store.logoUrl) {
+                const img = document.createElement("img");
+                img.src = store.logoUrl;
+                img.alt = store.name;
+                img.className = "pending-thumb-img";
+                body.appendChild(img);
             }
 
             const details = document.createElement("div");
             details.className = "pending-item-details";
-
             const catP = document.createElement("p");
-            catP.innerHTML = `<strong>Categoria:</strong> ${escapeHtml(data.category || "Geral")} &bull; <strong>Tel:</strong> ${escapeHtml(data.phone || "-")}`;
-
-            const descP = document.createElement("p");
-            descP.textContent = data.description || "";
-
+            catP.textContent = `${store.category} • ${store.phone}`;
             details.appendChild(catP);
-            details.appendChild(descP);
+
+            if (store.subscriptionExpiresAt) {
+                const expDate = new Date(store.subscriptionExpiresAt).toLocaleDateString("pt-BR");
+                const expP = document.createElement("p");
+                expP.textContent = `Divulgação válida até: ${expDate}`;
+                details.appendChild(expP);
+            }
             body.appendChild(details);
 
             const actions = document.createElement("div");
             actions.className = "pending-item-actions";
 
-            const approveBtn = document.createElement("button");
-            approveBtn.type = "button";
-            approveBtn.className = "btn-approve";
-            approveBtn.textContent = "✓ Aprovar";
-            approveBtn.addEventListener("click", async () => {
-                try {
-                    const approvedCompany = await CompanyApi.approve(item.id);
-                    showToast(`Alterações de "${approvedCompany.name}" aprovadas!`);
-                    await loadCompanies(approvedCompany.id);
-                } catch {
-                    showToast("Erro ao aprovar alterações.");
-                }
-            });
+            if (store.paymentStatus === "PENDING_PAYMENT") {
+                const payBtn = document.createElement("button");
+                payBtn.type = "button";
+                payBtn.className = "btn-approve";
+                payBtn.textContent = "💳 Pagar Pix R$ 50,00";
+                payBtn.addEventListener("click", () => {
+                    closeModal(el.profileModal);
+                    openPixModal(store, false);
+                });
+                actions.appendChild(payBtn);
+            } else if (store.expired || store.paymentStatus === "PAID") {
+                const renewBtn = document.createElement("button");
+                renewBtn.type = "button";
+                renewBtn.className = "btn-secondary btn-sm";
+                renewBtn.textContent = "🔄 Renovar +1 mês (R$ 50)";
+                renewBtn.addEventListener("click", () => {
+                    closeModal(el.profileModal);
+                    openPixModal(store, true);
+                });
+                actions.appendChild(renewBtn);
+            }
 
-            const rejectBtn = document.createElement("button");
-            rejectBtn.type = "button";
-            rejectBtn.className = "btn-reject";
-            rejectBtn.textContent = "✕ Rejeitar";
-            rejectBtn.addEventListener("click", async () => {
-                try {
-                    await CompanyApi.reject(item.id);
-                    showToast("Solicitação rejeitada.");
-                    await loadCompanies(item.id);
-                } catch {
-                    showToast("Erro ao rejeitar solicitação.");
-                }
+            const editBtn = document.createElement("button");
+            editBtn.type = "button";
+            editBtn.className = "btn-secondary btn-sm";
+            editBtn.textContent = "✏️ Editar";
+            editBtn.addEventListener("click", () => {
+                closeModal(el.profileModal);
+                openCompanyForm(store);
             });
-
-            actions.appendChild(approveBtn);
-            actions.appendChild(rejectBtn);
+            actions.appendChild(editBtn);
 
             card.appendChild(header);
             card.appendChild(body);
             card.appendChild(actions);
-            el.pendingApprovalsList.appendChild(card);
+            el.myStoresList.appendChild(card);
         });
     }
 
-    function escapeHtml(str) {
-        return String(str)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;");
+    async function refreshMyStores() {
+        if (!state.user || !AuthApi.getToken()) {
+            state.myStores = [];
+            return;
+        }
+        try {
+            state.myStores = await CompanyApi.listMine();
+            renderMyStores();
+        } catch {
+            state.myStores = [];
+        }
+    }
+
+    function openPixModal(store, isRenewal = false) {
+        el.pixCompanyId.value = store.id;
+        el.pixIsRenewal.value = String(Boolean(isRenewal));
+        el.pixStoreNameLabel.textContent = isRenewal ? `Renovação (+1 mês): ${store.name}` : `Publicar loja: ${store.name}`;
+        el.pixKeyDisplay.textContent = state.providers.pixKey || "Chave Pix não configurada";
+        el.pixCopiaColaText.value = store.pixCode || "";
+        el.pixTxIdInput.value = "";
+        el.pixPayerNoteInput.value = "";
+
+        el.pixQrCanvasWrap.innerHTML = "";
+        if (store.pixCode && typeof window.qrcode === "function") {
+            try {
+                const qr = window.qrcode(0, "M");
+                qr.addData(store.pixCode);
+                qr.make();
+                el.pixQrCanvasWrap.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+            } catch {
+                el.pixQrCanvasWrap.textContent = "Use o código Pix Copia e Cola ao lado.";
+            }
+        } else {
+            el.pixQrCanvasWrap.textContent = "Use o código Pix Copia e Cola ao lado.";
+        }
+
+        openModal(el.pixModal);
+    }
+
+    async function loadProviders() {
+        try {
+            state.providers = await AuthApi.getProviders();
+        } catch {
+            // fallback defaults already in state
+        }
     }
 
     async function loadCompanies(keepId = null) {
@@ -458,15 +555,13 @@ document.addEventListener("DOMContentLoaded", () => {
         el.emptyState.classList.add("hidden");
 
         try {
-            const [companies, categories, pendingList] = await Promise.all([
+            const [companies, categories] = await Promise.all([
                 CompanyApi.list(state.searchQuery, state.selectedCategory),
-                CompanyApi.listCategories(),
-                CompanyApi.listPending()
+                CompanyApi.listCategories()
             ]);
 
             state.companies = companies;
             state.categories = categories;
-            state.pendingList = pendingList;
 
             if (keepId) {
                 const foundIndex = companies.findIndex((c) => c.id === keepId);
@@ -503,14 +598,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function openCompanyForm(company = null) {
+        if (!state.user || !AuthApi.getToken()) {
+            openAuthModal(() => openCompanyForm(company));
+            return;
+        }
+
         el.formLogoFile.value = "";
         el.logoUploadError.classList.add("hidden");
 
         if (company) {
             const source = company.hasPendingUpdate && company.pendingData ? company.pendingData : company;
-            el.formModalTitle.textContent = state.role === "ADMIN"
-                ? "Editar Loja (Administrador)"
-                : "Editar Minha Loja (Usuário)";
+            el.formModalTitle.textContent = "Editar Minha Loja";
             el.formCompanyId.value = company.id;
             el.formName.value = source.name || "";
             el.formCategory.value = source.category || "";
@@ -518,16 +616,17 @@ document.addEventListener("DOMContentLoaded", () => {
             el.formPhone.value = source.phone || "";
             el.formWhatsapp.value = source.whatsapp || "";
             el.formInstagram.value = source.instagram || "";
+            el.formApprovalNotice.innerHTML = "ℹ️ As modificações enviadas ficam pendentes até a <strong>aprovação do Administrador</strong>.";
+            el.formSubmitBtn.textContent = "Enviar Edição para o Adm";
             updateFormLogoPreview(source.logoUrl || "", source.logoUrl ? "Logo atual da empresa" : "");
         } else {
-            el.formModalTitle.textContent = state.role === "ADMIN"
-                ? "Cadastrar Empresa (Administrador)"
-                : "Cadastrar Empresa (Usuário)";
+            el.formModalTitle.textContent = "Cadastrar Nova Loja";
             el.companyForm.reset();
             el.formCompanyId.value = "";
+            el.formApprovalNotice.innerHTML = "💳 <strong>Taxa de divulgação: R$ 50,00 no Pix</strong> (direito a 1 mês na vitrine). Sua loja entra no ar após pagamento e aprovação do Administrador.";
+            el.formSubmitBtn.textContent = "Continuar para Pix (R$ 50,00)";
             updateFormLogoPreview("", "");
         }
-        renderSessionUI();
         openModal(el.companyFormModal);
     }
 
@@ -577,9 +676,124 @@ document.addEventListener("DOMContentLoaded", () => {
         updateFormLogoPreview("", "");
     });
 
-    // Alternância de sessão Usuário / Administrador
-    el.roleUserBtn.addEventListener("click", () => setRole("USER"));
-    el.roleAdminBtn.addEventListener("click", () => setRole("ADMIN"));
+    // Autenticação: Abas Login / Registro e OAuth Google / Microsoft
+    el.authTabLogin.addEventListener("click", () => switchAuthTab("login"));
+    el.authTabRegister.addEventListener("click", () => switchAuthTab("register"));
+
+    el.loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        showAuthError("");
+        try {
+            const resp = await AuthApi.login({
+                email: el.loginEmail.value.trim(),
+                password: el.loginPassword.value
+            });
+            await onAuthenticated(resp);
+        } catch (err) {
+            showAuthError(err.message);
+        }
+    });
+
+    el.registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        showAuthError("");
+        try {
+            const resp = await AuthApi.register({
+                name: el.registerName.value.trim(),
+                email: el.registerEmail.value.trim(),
+                password: el.registerPassword.value
+            });
+            await onAuthenticated(resp);
+        } catch (err) {
+            showAuthError(err.message);
+        }
+    });
+
+    function loadScriptOnce(src) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) {
+                resolve();
+                return;
+            }
+            const s = document.createElement("script");
+            s.src = src;
+            s.async = true;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
+    el.googleLoginBtn.addEventListener("click", async () => {
+        showAuthError("");
+        if (!state.providers.googleEnabled || !state.providers.googleClientId) {
+            showAuthError("Login com Google (Gmail) requer GOOGLE_CLIENT_ID configurado no backend. Por enquanto, você pode criar sua conta usando seu @gmail.com logo abaixo.");
+            return;
+        }
+        try {
+            await loadScriptOnce("https://accounts.google.com/gsi/client");
+            window.google.accounts.id.initialize({
+                client_id: state.providers.googleClientId,
+                callback: async (response) => {
+                    try {
+                        const authResp = await AuthApi.loginWithGoogle(response.credential);
+                        await onAuthenticated(authResp);
+                    } catch (err) {
+                        showAuthError(err.message);
+                    }
+                }
+            });
+            el.googleButtonContainer.classList.remove("hidden");
+            window.google.accounts.id.renderButton(el.googleButtonContainer, {
+                theme: "outline",
+                size: "large",
+                width: "100%"
+            });
+            window.google.accounts.id.prompt();
+        } catch {
+            showAuthError("Não foi possível carregar o login do Google.");
+        }
+    });
+
+    el.microsoftLoginBtn.addEventListener("click", () => {
+        showAuthError("");
+        if (!state.providers.microsoftEnabled || !state.providers.microsoftClientId) {
+            showAuthError("Login com Microsoft (Outlook) requer MICROSOFT_CLIENT_ID configurado no backend. Por enquanto, você pode criar sua conta usando seu @outlook.com logo abaixo.");
+            return;
+        }
+        const redirectUri = window.location.origin + window.location.pathname;
+        const authUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+            + `?client_id=${encodeURIComponent(state.providers.microsoftClientId)}`
+            + "&response_type=token"
+            + `&redirect_uri=${encodeURIComponent(redirectUri)}`
+            + `&scope=${encodeURIComponent("User.Read openid email profile")}`;
+
+        const popup = window.open(authUrl, "ms_oauth", "width=500,height=620");
+        if (!popup) {
+            showAuthError("Habilite pop-ups no navegador para entrar com a Microsoft.");
+            return;
+        }
+        const timer = setInterval(async () => {
+            try {
+                if (popup.closed) {
+                    clearInterval(timer);
+                    return;
+                }
+                if (popup.location.origin === window.location.origin && popup.location.hash.includes("access_token=")) {
+                    const hashParams = new URLSearchParams(popup.location.hash.substring(1));
+                    const accessToken = hashParams.get("access_token");
+                    popup.close();
+                    clearInterval(timer);
+                    if (accessToken) {
+                        const authResp = await AuthApi.loginWithMicrosoft(accessToken);
+                        await onAuthenticated(authResp);
+                    }
+                }
+            } catch {
+                // cross-origin while user is still on login.microsoftonline.com
+            }
+        }, 400);
+    });
 
     // Eventos de navegação e busca
     el.menuBtn.addEventListener("click", openDrawer);
@@ -644,10 +858,30 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Modais
-    el.profileBtn.addEventListener("click", () => {
-        renderSessionUI();
+    async function handleOpenAccountOrAuth() {
+        if (!state.user || !AuthApi.getToken()) {
+            openAuthModal(async () => {
+                await refreshMyStores();
+                openModal(el.profileModal);
+            });
+            return;
+        }
+        await refreshMyStores();
+        renderUserSessionUI();
         openModal(el.profileModal);
+    }
+
+    el.headerAuthBtn.addEventListener("click", handleOpenAccountOrAuth);
+    el.profileBtn.addEventListener("click", handleOpenAccountOrAuth);
+
+    el.logoutBtn.addEventListener("click", () => {
+        AuthApi.clearSession();
+        state.user = null;
+        state.myStores = [];
+        closeModal(el.profileModal);
+        renderUserSessionUI();
+        syncUserPhoto(state.companies[state.currentIndex] || null);
+        showToast("Você saiu da conta.");
     });
 
     document.querySelectorAll("[data-close-modal]").forEach((btn) => {
@@ -657,7 +891,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    [el.profileModal, el.companyFormModal].forEach((modal) => {
+    [el.authModal, el.profileModal, el.companyFormModal, el.pixModal].forEach((modal) => {
         modal.addEventListener("click", (e) => {
             if (e.target === modal) closeModal(modal);
         });
@@ -678,31 +912,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (current) openCompanyForm(current);
     });
 
-    el.openEditFromProfileBtn.addEventListener("click", () => {
-        closeModal(el.profileModal);
-        const current = state.companies[state.currentIndex];
-        if (current) openCompanyForm(current);
-    });
-
-    el.deleteCurrentCompanyBtn.addEventListener("click", async () => {
-        if (state.role !== "ADMIN") {
-            showToast("Apenas o Administrador pode remover empresas.");
-            return;
-        }
-        const current = state.companies[state.currentIndex];
-        if (!current) return;
-        if (!confirm(`Deseja remover "${current.name}" da vitrine?`)) return;
-
-        try {
-            await CompanyApi.remove(current.id);
-            closeModal(el.profileModal);
-            showToast("Empresa removida pelo Administrador.");
-            await loadCompanies();
-        } catch {
-            showToast("Erro ao remover empresa.");
-        }
-    });
-
     el.companyForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const id = el.formCompanyId.value.trim();
@@ -718,27 +927,61 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const saved = id
-                ? await CompanyApi.update(id, payload, state.role)
-                : await CompanyApi.create(payload, state.role);
+                ? await CompanyApi.update(id, payload)
+                : await CompanyApi.create(payload);
 
             closeModal(el.companyFormModal);
+            await refreshMyStores();
 
-            if (state.role === "ADMIN") {
-                showToast(id ? "Loja atualizada e publicada!" : "Loja cadastrada e publicada!");
+            if (id) {
+                showToast("Modificações enviadas! Aguardando aprovação do Administrador.");
+                await loadCompanies(saved.id);
             } else {
-                showToast(
-                    id
-                        ? "Edições enviadas! Aguardando aprovação do Administrador."
-                        : "Cadastro enviado! Aguardando aprovação do Administrador."
-                );
+                showToast("Loja pré-cadastrada! Realize o Pix de R$ 50,00 para aprovação.");
+                openPixModal(saved, false);
             }
+        } catch (err) {
+            showToast(err.message || "Erro ao salvar empresa.");
+        }
+    });
 
-            await loadCompanies(saved.id);
+    el.copyPixCodeBtn.addEventListener("click", async () => {
+        const code = el.pixCopiaColaText.value.trim();
+        if (!code) return;
+        try {
+            await navigator.clipboard.writeText(code);
+            showToast("Código Pix Copia e Cola copiado!");
         } catch {
-            showToast("Erro ao salvar alterações da empresa.");
+            showToast("Não foi possível copiar o código Pix.");
+        }
+    });
+
+    el.pixProofForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = el.pixCompanyId.value;
+        const isRenewal = el.pixIsRenewal.value === "true";
+
+        try {
+            await CompanyApi.submitPixProof(id, {
+                txId: el.pixTxIdInput.value.trim(),
+                payerNote: el.pixPayerNoteInput.value.trim(),
+                renewal: isRenewal
+            });
+            closeModal(el.pixModal);
+            await refreshMyStores();
+            showToast("Comprovante Pix enviado! Aguardando aprovação do Administrador.");
+        } catch (err) {
+            showToast(err.message || "Erro ao enviar comprovante Pix.");
         }
     });
 
     // Inicialização
-    loadCompanies();
+    (async () => {
+        await loadProviders();
+        if (AuthApi.getToken()) {
+            state.user = await AuthApi.verifySession();
+            await refreshMyStores();
+        }
+        await loadCompanies();
+    })();
 });

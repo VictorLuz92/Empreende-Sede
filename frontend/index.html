@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Empreende Sede — Vitrine de Empresas</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -24,14 +25,15 @@
             </a>
 
             <div class="topbar-right">
-                <span id="sessionRoleBadge" class="session-role-badge">Usuário</span>
-                <button id="profileBtn" class="profile-btn" aria-label="Abrir perfil e sessão">
+                <button id="headerAuthBtn" type="button" class="session-role-badge session-action-pill">
+                    Entrar
+                </button>
+                <button id="profileBtn" class="profile-btn" aria-label="Abrir conta do usuário">
                     <img id="headerUserAvatarImg" src="" alt="Foto do usuário" class="header-avatar-img hidden">
                     <svg id="headerUserDefaultIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                         <circle cx="12" cy="8" r="4"></circle>
                         <path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"></path>
                     </svg>
-                    <span id="pendingBadgeCount" class="pending-badge-count hidden" title="Aprovações pendentes">0</span>
                 </button>
             </div>
         </header>
@@ -87,7 +89,7 @@
                     <div class="company-header-row">
                         <h1 id="companyName" class="company-name">Carregando...</h1>
                         <div class="card-actions">
-                            <button id="editCompanyBtn" class="mini-action-btn" title="Editar empresa" aria-label="Editar empresa">
+                            <button id="editCompanyBtn" class="mini-action-btn hidden" title="Editar minha loja" aria-label="Editar minha loja">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M12 20h9"></path>
                                     <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
@@ -97,7 +99,7 @@
                     </div>
                     <p id="companyDescription" class="company-description"></p>
                     <div id="companyPendingNotice" class="company-pending-notice hidden">
-                        ⏳ Esta loja possui alterações enviadas pelo usuário aguardando aprovação do Administrador.
+                        ⏳ Você enviou modificações para esta loja. Aguardando aprovação do Administrador.
                     </div>
                 </div>
 
@@ -150,7 +152,7 @@
         </div>
 
         <nav class="drawer-nav">
-            <button id="newCompanyMenuBtn" class="drawer-action-primary">+ Cadastrar Empresa</button>
+            <button id="newCompanyMenuBtn" class="drawer-action-primary">+ Divulgar Minha Loja (R$ 50/mês)</button>
 
             <div class="drawer-section">
                 <h3>Categorias</h3>
@@ -159,28 +161,79 @@
 
             <div class="drawer-section drawer-footer-info">
                 <h3>Sobre o Empreende Sede</h3>
-                <p>Portal de divulgação e conexão direta com empreendedores locais.</p>
+                <p>Portal de divulgação e conexão direta com empreendedores locais. Plano mensal via Pix por R$ 50,00 após aprovação.</p>
             </div>
         </nav>
     </aside>
 
-    <!-- Modal de Perfil e Sessão (Usuário / Administrador) -->
+    <!-- Modal de Login / Cadastro do Usuário -->
+    <div id="authModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+        <div class="modal-card modal-card-lg">
+            <div class="modal-header">
+                <h2 id="authModalTitle">Entrar ou Criar Conta</h2>
+                <button class="icon-close-btn" data-close-modal="authModal" aria-label="Fechar">&times;</button>
+            </div>
+
+            <p class="auth-subtitle">Crie sua conta ou faça login para cadastrar sua loja (R$ 50,00/mês no Pix) e solicitar alterações.</p>
+
+            <!-- Login Social OAuth 2.0 (Google / Microsoft Outlook) -->
+            <div class="oauth-buttons-stack">
+                <button type="button" id="googleLoginBtn" class="oauth-btn oauth-google">
+                    <span class="oauth-icon">G</span>
+                    <span>Continuar com Google (Gmail)</span>
+                </button>
+                <button type="button" id="microsoftLoginBtn" class="oauth-btn oauth-microsoft">
+                    <span class="oauth-icon">M</span>
+                    <span>Continuar com Microsoft (Outlook)</span>
+                </button>
+            </div>
+            <div id="googleButtonContainer" class="google-gsi-slot hidden"></div>
+
+            <div class="auth-divider"><span>ou use seu e-mail e senha</span></div>
+
+            <div class="session-switcher" role="tablist">
+                <button type="button" id="authTabLogin" class="session-tab active" role="tab" aria-selected="true">Entrar</button>
+                <button type="button" id="authTabRegister" class="session-tab" role="tab" aria-selected="false">Criar Conta</button>
+            </div>
+
+            <div id="authErrorBox" class="logo-upload-error hidden" role="alert"></div>
+
+            <form id="loginForm" class="company-form">
+                <label>
+                    E-mail *
+                    <input type="email" id="loginEmail" required placeholder="seunome@gmail.com ou @outlook.com">
+                </label>
+                <label>
+                    Senha *
+                    <input type="password" id="loginPassword" required minlength="6" placeholder="Sua senha">
+                </label>
+                <button type="submit" class="btn-primary">Entrar com E-mail</button>
+            </form>
+
+            <form id="registerForm" class="company-form hidden">
+                <label>
+                    Seu Nome Completo *
+                    <input type="text" id="registerName" required maxlength="120" placeholder="Ex: Maria Silva">
+                </label>
+                <label>
+                    E-mail (Gmail, Outlook ou outro) *
+                    <input type="email" id="registerEmail" required maxlength="180" placeholder="maria@outlook.com">
+                </label>
+                <label>
+                    Crie uma Senha (mínimo 6 caracteres) *
+                    <input type="password" id="registerPassword" required minlength="6" maxlength="100" placeholder="******">
+                </label>
+                <button type="submit" class="btn-primary">Criar Conta e Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal da Conta do Usuário e Minhas Lojas -->
     <div id="profileModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
         <div class="modal-card modal-card-lg">
             <div class="modal-header">
-                <h2 id="profileModalTitle">Sessão &amp; Perfil</h2>
+                <h2 id="profileModalTitle">Minha Conta &amp; Minhas Lojas</h2>
                 <button class="icon-close-btn" data-close-modal="profileModal" aria-label="Fechar">&times;</button>
-            </div>
-
-            <!-- Alternador de Sessão: Usuário (Empreendedor) vs Administrador -->
-            <div class="session-switcher" role="tablist" aria-label="Alternar tipo de sessão">
-                <button type="button" id="roleUserBtn" class="session-tab active" role="tab" aria-selected="true">
-                    👤 Usuário (Loja)
-                </button>
-                <button type="button" id="roleAdminBtn" class="session-tab" role="tab" aria-selected="false">
-                    🛡️ Administrador
-                    <span id="adminTabBadge" class="tab-badge hidden">0</span>
-                </button>
             </div>
 
             <div class="profile-summary">
@@ -189,26 +242,24 @@
                     <span id="profileAvatarInitials">ES</span>
                 </div>
                 <div class="profile-info-text">
-                    <p id="profileName" class="profile-name">Empreendedor Local (Usuário)</p>
-                    <p id="profileEmail" class="profile-email">Loja ativa sincronizada com a foto do perfil</p>
-                    <p id="profileRoleHint" class="profile-role-hint">Você pode editar a loja; as mudanças ficam pendentes até aprovação do Administrador.</p>
+                    <p id="profileName" class="profile-name">Empreendedor</p>
+                    <p id="profileEmail" class="profile-email">usuario@email.com</p>
+                    <p class="profile-role-hint">Todas as criações e edições de loja passam pela aprovação do Administrador.</p>
                 </div>
             </div>
 
             <div class="modal-actions-stack">
-                <button id="openEditFromProfileBtn" class="btn-primary">Editar Loja Exibida</button>
-                <button id="openCreateFromProfileBtn" class="btn-secondary">Cadastrar Nova Empresa</button>
-                <button id="deleteCurrentCompanyBtn" class="btn-danger hidden">Remover Empresa Exibida (Adm)</button>
+                <button id="openCreateFromProfileBtn" class="btn-primary">+ Cadastrar Nova Loja (Pix R$ 50,00 / 1 mês)</button>
+                <button id="logoutBtn" class="btn-secondary">Sair da Conta</button>
             </div>
 
-            <!-- Painel de Aprovações do Administrador -->
-            <div id="adminApprovalSection" class="admin-approval-section hidden">
+            <div class="admin-approval-section">
                 <div class="admin-section-header">
-                    <h3>Aprovações Pendentes</h3>
-                    <span id="pendingCountLabel" class="pending-count-pill">0 pendentes</span>
+                    <h3>Minhas Lojas</h3>
+                    <span id="myStoresCountLabel" class="pending-count-pill">0 lojas</span>
                 </div>
-                <div id="pendingApprovalsList" class="pending-approvals-list">
-                    <p class="empty-pending-msg">Nenhuma alteração pendente de aprovação no momento.</p>
+                <div id="myStoresList" class="pending-approvals-list">
+                    <p class="empty-pending-msg">Você ainda não cadastrou nenhuma loja.</p>
                 </div>
             </div>
         </div>
@@ -218,7 +269,7 @@
     <div id="companyFormModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
         <div class="modal-card modal-card-lg">
             <div class="modal-header">
-                <h2 id="formModalTitle">Cadastrar Empresa</h2>
+                <h2 id="formModalTitle">Cadastrar Nova Loja</h2>
                 <button class="icon-close-btn" data-close-modal="companyFormModal" aria-label="Fechar">&times;</button>
             </div>
 
@@ -298,12 +349,59 @@
                 </label>
 
                 <div id="formApprovalNotice" class="form-approval-notice">
-                    ℹ️ Sessão atual: <strong>Usuário</strong>. Ao salvar, as alterações serão enviadas para aprovação do <strong>Administrador</strong> antes de irem ao ar.
+                    💳 <strong>Taxa de divulgação: R$ 50,00 no Pix</strong> (direito a 1 mês na vitrine). Sua loja e alterações entram no ar após aprovação do Administrador.
                 </div>
 
                 <div class="form-footer">
                     <button type="button" class="btn-secondary" data-close-modal="companyFormModal">Cancelar</button>
-                    <button type="submit" id="formSubmitBtn" class="btn-primary">Enviar para Aprovação</button>
+                    <button type="submit" id="formSubmitBtn" class="btn-primary">Continuar para Pix (R$ 50,00)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Pagamento Pix (R$ 50,00 = 1 mês de divulgação) -->
+    <div id="pixModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pixModalTitle">
+        <div class="modal-card modal-card-lg">
+            <div class="modal-header">
+                <h2 id="pixModalTitle">Pagamento Pix — R$ 50,00 (1 mês)</h2>
+                <button class="icon-close-btn" data-close-modal="pixModal" aria-label="Fechar">&times;</button>
+            </div>
+
+            <div class="pix-summary-banner">
+                <strong id="pixStoreNameLabel">Loja</strong>
+                <span>Valor: <strong>R$ 50,00</strong> &bull; Validade: <strong>30 dias (1 mês)</strong> após aprovação do Administrador.</span>
+            </div>
+
+            <div class="pix-qr-box">
+                <div id="pixQrCanvasWrap" class="pix-qr-wrap"></div>
+                <div class="pix-copy-col">
+                    <p class="pix-key-info"><strong>Chave Pix:</strong> <span id="pixKeyDisplay">-</span></p>
+                    <label class="pix-code-label">
+                        Pix Copia e Cola
+                        <textarea id="pixCopiaColaText" rows="3" readonly></textarea>
+                    </label>
+                    <button type="button" id="copyPixCodeBtn" class="btn-secondary">📋 Copiar código Pix</button>
+                </div>
+            </div>
+
+            <form id="pixProofForm" class="company-form">
+                <input type="hidden" id="pixCompanyId">
+                <input type="hidden" id="pixIsRenewal" value="false">
+
+                <label>
+                    ID / Código da transação Pix ou E2E *
+                    <input type="text" id="pixTxIdInput" required maxlength="120" placeholder="Ex: E1234567820261114... ou Comprovante #001">
+                </label>
+
+                <label>
+                    Nome do pagador / Observação (opcional)
+                    <input type="text" id="pixPayerNoteInput" maxlength="255" placeholder="Ex: Pago por Maria Silva às 11:20">
+                </label>
+
+                <div class="form-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="pixModal">Pagar depois</button>
+                    <button type="submit" class="btn-primary">Enviar Comprovante para o Adm</button>
                 </div>
             </form>
         </div>
@@ -311,6 +409,7 @@
 
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
 </body>
