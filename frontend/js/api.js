@@ -5,7 +5,7 @@ const ADMIN_BASE_URL = `${API_ORIGIN}/api/admin`;
 
 const USER_TOKEN_KEY = "empreende_sede_user_token";
 const USER_INFO_KEY = "empreende_sede_user_info";
-const STORAGE_KEY = "empreende_sede_demo_companies_v5";
+const STORAGE_KEY = "empreende_sede_demo_companies_v6";
 
 const OFFICIAL_SERVICE_CATEGORIES = [
     "Mão de Obra",
@@ -67,10 +67,22 @@ const SERVICE_PHOTOS = {
 };
 
 const RAW_SEED_COMPANIES = [
-    // Mão de Obra — Reparos & Hidráulica
+    // Mão de Obra — Reparos & Hidráulica (15 exemplos)
     ["Sede Manutenção & Reparos", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao1, "Serviços elétricos, hidráulicos, montagem de móveis e pequenos reparos residenciais e comerciais com garantia.", "(11) 91234-5678", "5511912345678", "sedemanutencao.oficial"],
     ["HidroFix Caça-Vazamentos", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao2, "Desentupimento, troca de registros, caixas d'água, torneiras e reparos hidráulicos emergenciais na comunidade.", "(11) 91234-5601", "5511912345601", "hidrofix.sede"],
     ["Marido de Aluguel Express", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao3, "Fixação de prateleiras, suporte de TV, troca de fechaduras, chuveiros e manutenção geral do lar.", "(11) 91234-5602", "5511912345602", "maridoexpress.local"],
+    ["Água Clara Desentupidora", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao1, "Desentupimento de pias, ralos, vasos sanitários e limpeza de caixas de gordura sem quebra-quebra.", "(11) 91234-5603", "5511912345603", "aguaclara.sede"],
+    ["Chave & Fechadura 24h", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao2, "Troca de miolo, instalação de fechaduras digitais, cópias de chaves e reparo em portões.", "(11) 91234-5604", "5511912345604", "chavefechadura24h"],
+    ["Conexão Hidráulica Bairro", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao3, "Instalação de misturadores, válvulas Hydra, aquecedores e tubulações de água fria e quente.", "(11) 91234-5605", "5511912345605", "conexaohidraulica.sede"],
+    ["SOS Torneiras & Registros", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao1, "Reparo rápido de vazamentos em pias, descargas acopladas, sifões e registros de gaveta.", "(11) 91234-5606", "5511912345606", "sostorneiras.local"],
+    ["VedaTudo Impermeabilização", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao2, "Vedação de box de banheiro, rejunte impermeável, calhas e reparo de infiltrações leves.", "(11) 91234-5607", "5511912345607", "vedatudo.reparos"],
+    ["MontaFácil Móveis & Suportes", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao3, "Montagem e desmontagem de guarda-roupas, painéis, cortinas, varões e móveis recém-comprados.", "(11) 91234-5608", "5511912345608", "montafacil.sede"],
+    ["Caixa Limpa Higienização", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao1, "Limpeza e vedação de caixas d'água residenciais, troca de boias e filtros de entrada.", "(11) 91234-5609", "5511912345609", "caixalimpa.sede"],
+    ["Serralheria & Reparos Souza", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao2, "Soldas rápidas, ajuste de portões basculantes, troca de dobradiças e grades de proteção.", "(11) 91234-5610", "5511912345610", "serralheriasouza"],
+    ["ProntoLar Reparos Rápidos", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao3, "Pequenos consertos domésticos, instalação de tanquinhos, lava-louças e troca de chuveiros.", "(11) 91234-5611", "5511912345611", "prontolar.sede"],
+    ["Tubo & Pressão Hidráulica", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao1, "Instalação de bombas pressurizadoras, tubulações de piscina e detecção acústica de vazamentos.", "(11) 91234-5612", "5511912345612", "tuboepressao.sede"],
+    ["Casa em Ordem Manutenção", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao2, "Manutenção preventiva mensal para residências e comércios: hidráulica, ferragens e ajustes gerais.", "(11) 91234-5613", "5511912345613", "casaemordem.sede"],
+    ["Ralo Livre & Encanamentos", "Mão de Obra", "Reparos & Hidráulica", SERVICE_PHOTOS.mao3, "Troca de colunas de PVC, reparo em encanamentos antigos e instalação de ralos lineares.", "(11) 91234-5614", "5511912345614", "ralolivre.sede"],
     // Mão de Obra — Elétrica & Instalações
     ["EletroForte Instalações", "Mão de Obra", "Elétrica & Instalações", SERVICE_PHOTOS.mao2, "Instalação de ar-condicionado, quadros elétricos, tomadas e iluminação LED com atendimento rápido em toda a cidade.", "(11) 93456-7810", "5511934567810", "eletroforte.sede"],
     ["Luz & Ponto Elétrica", "Mão de Obra", "Elétrica & Instalações", SERVICE_PHOTOS.mao1, "Projetos de iluminação residencial, ventiladores de teto, automação simples e revisão segura de fiação.", "(11) 93456-7811", "5511934567811", "luzeponto.eletrica"],
