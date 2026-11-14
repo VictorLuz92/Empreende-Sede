@@ -41,6 +41,13 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+#root {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+}
+
 .hidden {
     display: none !important;
 }
@@ -785,11 +792,69 @@ body {
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 }
 
 .category-item.active {
     background: var(--accent-soft);
     border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.drawer-category-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.drawer-chevron {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.drawer-chevron.expanded {
+    transform: rotate(90deg);
+    color: var(--accent);
+}
+
+.drawer-subsegment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-left: 10px;
+    padding-left: 10px;
+    border-left: 2px solid var(--border-color);
+}
+
+.drawer-subsegment-item {
+    text-align: left;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.drawer-subsegment-item:hover {
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+}
+
+.drawer-subsegment-item.active {
+    background: var(--accent-soft);
+    border-color: rgba(15, 98, 254, 0.35);
     color: var(--accent);
     font-weight: 600;
 }
