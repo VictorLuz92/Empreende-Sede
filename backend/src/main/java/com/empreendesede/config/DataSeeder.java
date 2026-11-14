@@ -17,6 +17,22 @@ import java.util.List;
 @Profile("dev")
 public class DataSeeder {
 
+    private static final String MAO_1 = "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80";
+    private static final String MAO_2 = "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80";
+    private static final String MAO_3 = "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=600&q=80";
+    private static final String COM_1 = "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80";
+    private static final String COM_2 = "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80";
+    private static final String COM_3 = "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80";
+    private static final String GAS_1 = "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80";
+    private static final String GAS_2 = "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80";
+    private static final String GAS_3 = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+    private static final String BEL_1 = "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80";
+    private static final String BEL_2 = "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=600&q=80";
+    private static final String BEL_3 = "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80";
+    private static final String VES_1 = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80";
+    private static final String VES_2 = "https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=600&q=80";
+    private static final String VES_3 = "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80";
+
     @Bean
     CommandLineRunner seedCompanies(
             CompanyRepository repository,
@@ -40,63 +56,317 @@ public class DataSeeder {
             admin.setPasswordHash(passwordHasher.hash(adminPassword));
             admin = userRepository.save(admin);
 
+            String testUserEmail = "usuario@empreendesede.com.br";
+            UserAccount testUser = userRepository.findByEmailIgnoreCase(testUserEmail)
+                    .orElseGet(() -> {
+                        UserAccount created = new UserAccount();
+                        created.setName("Usuário Teste");
+                        created.setEmail(testUserEmail);
+                        created.setAuthProvider("LOCAL");
+                        created.setRole("USER");
+                        return created;
+                    });
+            testUser.setRole("USER");
+            testUser.setPasswordHash(passwordHasher.hash("Usuario@123"));
+            testUser.setSubscriptionExpiresAt(null);
+            testUser = userRepository.save(testUser);
+
             if (repository.count() > 0) {
                 return;
             }
 
-            Company c1 = new Company();
-            c1.setName("Café & Prosa Artesanal");
-            c1.setCategory("Gastronomia");
-            c1.setLogoUrl("https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80");
-            c1.setDescription("Cafeteria especializada em grãos selecionados, pães de fermentação natural e um espaço acolhedor para reuniões e trabalho remoto.");
-            c1.setPhone("(11) 98765-4321");
-            c1.setWhatsapp("5511987654321");
-            c1.setInstagram("cafeprosa.artesanal");
-            c1.setOwnerId(admin.getId());
-            c1.setOwnerEmail(admin.getEmail());
-            c1.setApproved(true);
-            c1.setPaymentStatus("EXEMPT");
+            Company userOwnedSample = createSeedCompany(
+                    admin, "Sede Manutenção & Reparos", "Mão de Obra", "Hidráulica", MAO_1,
+                    "Serviços elétricos, hidráulicos, montagem de móveis e pequenos reparos residenciais e comerciais com garantia.",
+                    "(11) 91234-5678", "5511912345678", "sedemanutencao.oficial"
+            );
 
-            Company c2 = new Company();
-            c2.setName("Sede Tech Soluções");
-            c2.setCategory("Tecnologia");
-            c2.setLogoUrl("https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80");
-            c2.setDescription("Desenvolvimento de sistemas sob medida, automação comercial e suporte técnico especializado para pequenos e médios negócios.");
-            c2.setPhone("(11) 91234-5678");
-            c2.setWhatsapp("5511912345678");
-            c2.setInstagram("sedetech.oficial");
-            c2.setOwnerId(admin.getId());
-            c2.setOwnerEmail(admin.getEmail());
-            c2.setApproved(true);
-            c2.setPaymentStatus("EXEMPT");
+            repository.saveAll(List.of(
+                    // Mão de Obra — Hidráulica (15 exemplos)
+                    userOwnedSample,
+                    createSeedCompany(admin, "HidroFix Caça-Vazamentos", "Mão de Obra", "Hidráulica", MAO_2,
+                            "Desentupimento, troca de registros, caixas d'água, torneiras e reparos hidráulicos emergenciais na comunidade.",
+                            "(11) 91234-5601", "5511912345601", "hidrofix.sede"),
+                    createSeedCompany(admin, "Marido de Aluguel Express", "Mão de Obra", "Hidráulica", MAO_3,
+                            "Fixação de prateleiras, suporte de TV, troca de fechaduras, chuveiros e manutenção geral do lar.",
+                            "(11) 91234-5602", "5511912345602", "maridoexpress.local"),
+                    createSeedCompany(admin, "Água Clara Desentupidora", "Mão de Obra", "Hidráulica", MAO_1,
+                            "Desentupimento de pias, ralos, vasos sanitários e limpeza de caixas de gordura sem quebra-quebra.",
+                            "(11) 91234-5603", "5511912345603", "aguaclara.sede"),
+                    createSeedCompany(admin, "Chave & Fechadura 24h", "Mão de Obra", "Hidráulica", MAO_2,
+                            "Troca de miolo, instalação de fechaduras digitais, cópias de chaves e reparo em portões.",
+                            "(11) 91234-5604", "5511912345604", "chavefechadura24h"),
+                    createSeedCompany(admin, "Conexão Hidráulica Bairro", "Mão de Obra", "Hidráulica", MAO_3,
+                            "Instalação de misturadores, válvulas Hydra, aquecedores e tubulações de água fria e quente.",
+                            "(11) 91234-5605", "5511912345605", "conexaohidraulica.sede"),
+                    createSeedCompany(admin, "SOS Torneiras & Registros", "Mão de Obra", "Hidráulica", MAO_1,
+                            "Reparo rápido de vazamentos em pias, descargas acopladas, sifões e registros de gaveta.",
+                            "(11) 91234-5606", "5511912345606", "sostorneiras.local"),
+                    createSeedCompany(admin, "VedaTudo Impermeabilização", "Mão de Obra", "Hidráulica", MAO_2,
+                            "Vedação de box de banheiro, rejunte impermeável, calhas e reparo de infiltrações leves.",
+                            "(11) 91234-5607", "5511912345607", "vedatudo.reparos"),
+                    createSeedCompany(admin, "MontaFácil Móveis & Suportes", "Mão de Obra", "Hidráulica", MAO_3,
+                            "Montagem e desmontagem de guarda-roupas, painéis, cortinas, varões e móveis recém-comprados.",
+                            "(11) 91234-5608", "5511912345608", "montafacil.sede"),
+                    createSeedCompany(admin, "Caixa Limpa Higienização", "Mão de Obra", "Hidráulica", MAO_1,
+                            "Limpeza e vedação de caixas d'água residenciais, troca de boias e filtros de entrada.",
+                            "(11) 91234-5609", "5511912345609", "caixalimpa.sede"),
+                    createSeedCompany(admin, "Serralheria & Reparos Souza", "Mão de Obra", "Hidráulica", MAO_2,
+                            "Soldas rápidas, ajuste de portões basculantes, troca de dobradiças e grades de proteção.",
+                            "(11) 91234-5610", "5511912345610", "serralheriasouza"),
+                    createSeedCompany(admin, "ProntoLar Reparos Rápidos", "Mão de Obra", "Hidráulica", MAO_3,
+                            "Pequenos consertos domésticos, instalação de tanquinhos, lava-louças e troca de chuveiros.",
+                            "(11) 91234-5611", "5511912345611", "prontolar.sede"),
+                    createSeedCompany(admin, "Tubo & Pressão Hidráulica", "Mão de Obra", "Hidráulica", MAO_1,
+                            "Instalação de bombas pressurizadoras, tubulações de piscina e detecção acústica de vazamentos.",
+                            "(11) 91234-5612", "5511912345612", "tuboepressao.sede"),
+                    createSeedCompany(admin, "Casa em Ordem Manutenção", "Mão de Obra", "Hidráulica", MAO_2,
+                            "Manutenção preventiva mensal para residências e comércios: hidráulica, ferragens e ajustes gerais.",
+                            "(11) 91234-5613", "5511912345613", "casaemordem.sede"),
+                    createSeedCompany(admin, "Ralo Livre & Encanamentos", "Mão de Obra", "Hidráulica", MAO_3,
+                            "Troca de colunas de PVC, reparo em encanamentos antigos e instalação de ralos lineares.",
+                            "(11) 91234-5614", "5511912345614", "ralolivre.sede"),
+                    // Mão de Obra — Elétrica
+                    createSeedCompany(admin, "EletroForte Instalações", "Mão de Obra", "Elétrica", MAO_2,
+                            "Instalação de ar-condicionado, quadros elétricos, tomadas e iluminação LED com atendimento rápido em toda a cidade.",
+                            "(11) 93456-7810", "5511934567810", "eletroforte.sede"),
+                    createSeedCompany(admin, "Luz & Ponto Elétrica", "Mão de Obra", "Elétrica", MAO_1,
+                            "Projetos de iluminação residencial, ventiladores de teto, automação simples e revisão segura de fiação.",
+                            "(11) 93456-7811", "5511934567811", "luzeponto.eletrica"),
+                    createSeedCompany(admin, "ClimaCerto Refrigeração", "Mão de Obra", "Elétrica", MAO_3,
+                            "Instalação, higienização e recarga de gás para ar-condicionado split e balcões refrigerados.",
+                            "(11) 93456-7812", "5511934567812", "climacerto.sede"),
+                    // Mão de Obra — Marcenaria
+                    createSeedCompany(admin, "Marcenaria Tradição & Sob Medida", "Mão de Obra", "Marcenaria", MAO_3,
+                            "Móveis planejados, restauração em madeira maciça, portas e painéis ripados feitos sob medida para sua casa ou loja.",
+                            "(11) 94567-8912", "5511945678912", "marcenariatradicao"),
+                    createSeedCompany(admin, "Arte em Madeira Planejados", "Mão de Obra", "Marcenaria", MAO_1,
+                            "Cozinhas planejadas, guarda-roupas, nichos e balcões comerciais com acabamento em MDF.",
+                            "(11) 94567-8913", "5511945678913", "arteemmadeira.sede"),
+                    createSeedCompany(admin, "Oficina do Marceneiro", "Mão de Obra", "Marcenaria", MAO_2,
+                            "Conserto de cadeiras, troca de dobradiças, ajuste de gavetas e fabricação de mesas artesanais.",
+                            "(11) 94567-8914", "5511945678914", "oficinadomarceneiro"),
+                    // Mão de Obra — Reformas
+                    createSeedCompany(admin, "Cor & Traço Pinturas", "Mão de Obra", "Reformas", MAO_1,
+                            "Pintura interna e externa, textura, grafiato, massa corrida e impermeabilização de paredes.",
+                            "(11) 95678-9015", "5511956789015", "coretraco.pinturas"),
+                    createSeedCompany(admin, "Obra Limpa Pequenas Reformas", "Mão de Obra", "Reformas", MAO_2,
+                            "Assentamento de pisos e revestimentos, rejunte, drywall e manutenção predial completa.",
+                            "(11) 95678-9016", "5511956789016", "obralimpa.reformas"),
+                    createSeedCompany(admin, "Acabamento Fino Revestimentos", "Mão de Obra", "Reformas", MAO_3,
+                            "Aplicação de papel de parede, gesso decorativo, rodapés e renovação rápida de ambientes.",
+                            "(11) 95678-9017", "5511956789017", "acabamentofino.sede"),
 
-            Company c3 = new Company();
-            c3.setName("Estúdio Raiz Design");
-            c3.setCategory("Design & Marketing");
-            c3.setLogoUrl("https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=600&q=80");
-            c3.setDescription("Identidade visual, gestão de redes sociais e fotografia comercial para impulsionar marcas locais com criatividade.");
-            c3.setPhone("(11) 99887-7665");
-            c3.setWhatsapp("5511998877665");
-            c3.setInstagram("estudioraiz.design");
-            c3.setOwnerId(admin.getId());
-            c3.setOwnerEmail(admin.getEmail());
-            c3.setApproved(true);
-            c3.setPaymentStatus("EXEMPT");
+                    // Comércio — Hortifrúti
+                    createSeedCompany(admin, "Verde Vida Hortifrúti", "Comércio", "Hortifrúti", COM_1,
+                            "Produtos orgânicos frescos direto do produtor, cestas semanais por assinatura e entregas rápidas na região.",
+                            "(11) 97766-5544", "5511977665544", "verdevida.organicos"),
+                    createSeedCompany(admin, "Sacolão da Praça", "Comércio", "Hortifrúti", COM_3,
+                            "Frutas, verduras e legumes selecionados todos os dias com preço justo e entrega no bairro.",
+                            "(11) 97766-5545", "5511977665545", "sacolaodapraca.sede"),
+                    createSeedCompany(admin, "Raiz & Campo Orgânicos", "Comércio", "Hortifrúti", COM_2,
+                            "Hortaliças hidropônicas, ovos caipiras, mel natural e temperos frescos colhidos na semana.",
+                            "(11) 97766-5546", "5511977665546", "raizcampoorganicos"),
+                    // Comércio — Eletrônicos
+                    createSeedCompany(admin, "TechLocal Informática & Celulares", "Comércio", "Eletrônicos", COM_2,
+                            "Acessórios para celular, periféricos, notebooks e assistência técnica especializada com peças originais e garantia.",
+                            "(11) 99123-4501", "5511991234501", "techlocal.sede"),
+                    createSeedCompany(admin, "CellPoint Capas & Troca de Tela", "Comércio", "Eletrônicos", COM_1,
+                            "Películas 3D, carregadores homologados, troca rápida de bateria e reparo de smartphones.",
+                            "(11) 99123-4502", "5511991234502", "cellpoint.sede"),
+                    createSeedCompany(admin, "ByteSede Computadores", "Comércio", "Eletrônicos", COM_3,
+                            "Formatação, upgrade com SSD, venda de roteadores, cabos e suporte técnico para home office.",
+                            "(11) 99123-4503", "5511991234503", "bytesede.info"),
+                    // Comércio — Mercearia
+                    createSeedCompany(admin, "Empório da Serra Mercearia", "Comércio", "Mercearia", COM_3,
+                            "Queijos artesanais, cafés especiais, temperos naturais, bebidas e produtos coloniais selecionados diariamente.",
+                            "(11) 98234-5602", "5511982345602", "emporiodaserra.loja"),
+                    createSeedCompany(admin, "Mercadinho Bom Vizinho", "Comércio", "Mercearia", COM_1,
+                            "Itens essenciais do dia a dia, bebidas geladas, frios fatiados na hora e atendimento próximo.",
+                            "(11) 98234-5603", "5511982345603", "mercadinhobomvizinho"),
+                    createSeedCompany(admin, "Armazém Grão & Sabor", "Comércio", "Mercearia", COM_2,
+                            "Produtos a granel, castanhas, farinhas especiais, chás naturais e grãos selecionados.",
+                            "(11) 98234-5604", "5511982345604", "armazemgraoesabor"),
+                    // Comércio — Papelaria
+                    createSeedCompany(admin, "Papelaria Central & Cópias", "Comércio", "Papelaria", COM_2,
+                            "Material escolar, impressões, encadernação, plastificação, carimbos e artigos de escritório.",
+                            "(11) 98345-6705", "5511983456705", "papelariacentral.sede"),
+                    createSeedCompany(admin, "Casa Útil Bazar & Presentes", "Comércio", "Papelaria", COM_3,
+                            "Utilidades domésticas, potes organizadores, ferramentas simples e opções criativas para presentear.",
+                            "(11) 98345-6706", "5511983456706", "casautil.bazar"),
+                    createSeedCompany(admin, "Criativa Papel & Festas", "Comércio", "Papelaria", COM_1,
+                            "Papéis especiais, artigos para festas de aniversário, embalagens para lojistas e lembrancinhas.",
+                            "(11) 98345-6707", "5511983456707", "criativapapelfestas"),
 
-            Company c4 = new Company();
-            c4.setName("Verde Vida Hortifrúti");
-            c4.setCategory("Comércio Local");
-            c4.setLogoUrl("https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80");
-            c4.setDescription("Produtos orgânicos frescos direto do produtor, cestas semanais por assinatura e entregas rápidas na região.");
-            c4.setPhone("(11) 97766-5544");
-            c4.setWhatsapp("5511977665544");
-            c4.setInstagram("verdevida.organicos");
-            c4.setOwnerId(admin.getId());
-            c4.setOwnerEmail(admin.getEmail());
-            c4.setApproved(true);
-            c4.setPaymentStatus("EXEMPT");
+                    // Gastronomia — Padaria
+                    createSeedCompany(admin, "Café & Prosa Artesanal", "Gastronomia", "Padaria", GAS_1,
+                            "Cafeteria especializada em grãos selecionados, pães de fermentação natural e um espaço acolhedor para reuniões e trabalho remoto.",
+                            "(11) 98765-4321", "5511987654321", "cafeprosa.artesanal"),
+                    createSeedCompany(admin, "Padaria Pão Quente da Vila", "Gastronomia", "Padaria", GAS_3,
+                            "Pão francês quentinho toda hora, broas de milho, roscas doces e café da manhã completo.",
+                            "(11) 98765-4322", "5511987654322", "paoquentedavila"),
+                    createSeedCompany(admin, "Grão & Leite Cafeteria", "Gastronomia", "Padaria", GAS_2,
+                            "Cappuccinos cremosos, espresso moído na hora, pão de queijo mineiro e bolos caseiros.",
+                            "(11) 98765-4323", "5511987654323", "graoeleite.cafe"),
+                    // Gastronomia — Pizzaria
+                    createSeedCompany(admin, "Forno Nobre Pizzaria & Massas", "Gastronomia", "Pizzaria", GAS_2,
+                            "Pizzas artesanais assadas em forno a lenha com massa de longa fermentação, massas frescas e delivery próprio.",
+                            "(11) 97345-6703", "5511973456703", "fornonobre.pizzas"),
+                    createSeedCompany(admin, "Nonna Bella Massas Frescas", "Gastronomia", "Pizzaria", GAS_1,
+                            "Lasanhas, nhoques e raviólis artesanais prontos para assar ou quentinhos para entrega na comunidade.",
+                            "(11) 97345-6704", "5511973456704", "nonnabella.massas"),
+                    createSeedCompany(admin, "Bairro Burguer & Pizza", "Gastronomia", "Pizzaria", GAS_3,
+                            "Pizzas tradicionais e doces, esfihas abertas e combos familiares com entrega rápida na região.",
+                            "(11) 97345-6705", "5511973456705", "bairroburguerpizza"),
+                    // Gastronomia — Lanchonete
+                    createSeedCompany(admin, "Lanchonete do Bairro", "Gastronomia", "Lanchonete", GAS_2,
+                            "X-salada artesanal, pastéis fritos na hora, sucos naturais e porções para toda a família.",
+                            "(11) 96123-4510", "5511961234510", "lanchonetedobairro.sede"),
+                    createSeedCompany(admin, "Sede Burger & Lanches", "Gastronomia", "Lanchonete", GAS_1,
+                            "Hambúrgueres na chapa, combos com batata frita, hot dogs prensados e delivery rápido.",
+                            "(11) 96123-4511", "5511961234511", "sedeburger.lanches"),
+                    createSeedCompany(admin, "Ponto do Pastel & Suco", "Gastronomia", "Lanchonete", GAS_3,
+                            "Pastéis de feira recheados, salgados assados, caldo de cana e vitamina gelada.",
+                            "(11) 96123-4512", "5511961234512", "pontodopastel.sede"),
+                    // Gastronomia — Doceria
+                    createSeedCompany(admin, "Doce Encanto Confeitaria", "Gastronomia", "Doceria", GAS_3,
+                            "Bolos artesanais para festas, doces finos, tortas geladas e kits personalizados para eventos e encomendas.",
+                            "(11) 96456-7804", "5511964567804", "doceencanto.confeitaria"),
+                    createSeedCompany(admin, "Brigaderia Sabor de Casa", "Gastronomia", "Doceria", GAS_1,
+                            "Brigadeiros gourmet, bolos de pote, brownies recheados e caixinhas personalizadas para presentes.",
+                            "(11) 96456-7805", "5511964567805", "brigaderiasabordecasa"),
+                    createSeedCompany(admin, "Tortas & Sonhos Atelier", "Gastronomia", "Doceria", GAS_2,
+                            "Cheesecakes, banoffee, pavês artesanais e sobremesas sob encomenda para fins de semana.",
+                            "(11) 96456-7806", "5511964567806", "tortasesonhos.sede"),
+                    // Gastronomia — Restaurante
+                    createSeedCompany(admin, "Tempero da Vó Marmitaria", "Gastronomia", "Restaurante", GAS_1,
+                            "Comida caseira feita no dia, marmitex com opções variadas e entrega rápida no horário do almoço.",
+                            "(11) 96567-8907", "5511965678907", "temperodavo.marmitas"),
+                    createSeedCompany(admin, "Sabor Leve Marmitas Fit", "Gastronomia", "Restaurante", GAS_2,
+                            "Refeições congeladas balanceadas, combos semanais low carb e opções vegetarianas.",
+                            "(11) 96567-8908", "5511965678908", "saborleve.fit"),
+                    createSeedCompany(admin, "Fogão Mineiro Delivery", "Gastronomia", "Restaurante", GAS_3,
+                            "Feijoada aos sábados, arroz carreteiro, carnes assadas e porções generosas para toda a família.",
+                            "(11) 96567-8909", "5511965678909", "fogaomineiro.sede"),
 
-            repository.saveAll(List.of(c1, c2, c3, c4));
+                    // Beleza — Salão
+                    createSeedCompany(admin, "Espaço Raiz Beleza & Barbearia", "Beleza", "Salão", BEL_1,
+                            "Cortes masculinos e femininos, barba, coloração, escova e estética facial com horário agendado.",
+                            "(11) 99887-7665", "5511998877665", "espacoraiz.beleza"),
+                    createSeedCompany(admin, "Salão Essencial Cabelos", "Beleza", "Salão", BEL_3,
+                            "Hidratação profunda, progressiva sem formol, mechas iluminadas e cortes modernos.",
+                            "(11) 99887-7666", "5511998877666", "salaoessencial.sede"),
+                    createSeedCompany(admin, "Studio Vibe Capilar", "Beleza", "Salão", BEL_2,
+                            "Penteados para festas, tratamentos para cachos, reconstrução capilar e atendimento familiar.",
+                            "(11) 99887-7667", "5511998877667", "studiovibecapilar"),
+                    // Beleza — Barbearia
+                    createSeedCompany(admin, "Barbearia Dom Pedro", "Beleza", "Barbearia", BEL_2,
+                            "Corte masculino clássico e degradê, barboterapia com toalha quente e cuidados completos para o visual masculino.",
+                            "(11) 95567-8905", "5511955678905", "barbeariadompedro"),
+                    createSeedCompany(admin, "Navalha Fina Barber", "Beleza", "Barbearia", BEL_1,
+                            "Degradê na navalha, alinhamento de barba, pigmentação leve e planos mensais de corte.",
+                            "(11) 95567-8906", "5511955678906", "navalhafinabarber"),
+                    createSeedCompany(admin, "Clube do Corte Masculino", "Beleza", "Barbearia", BEL_3,
+                            "Ambiente descontraído, corte infantil e adulto, barba modelada e sobrancelha masculina.",
+                            "(11) 95567-8907", "5511955678907", "clubedocortesede"),
+                    // Beleza — Manicure
+                    createSeedCompany(admin, "Studio Bela Essência", "Beleza", "Manicure", BEL_3,
+                            "Manicure, pedicure, design de sobrancelhas, alongamento de cílios e maquiagem social em ambiente climatizado.",
+                            "(11) 94678-9006", "5511946789006", "studiobelaessencia"),
+                    createSeedCompany(admin, "Esmalteria Mãos de Seda", "Beleza", "Manicure", BEL_1,
+                            "Esmaltação em gel, blindagem, spa dos pés e cutilagem cuidadosa com materiais esterilizados.",
+                            "(11) 94678-9007", "5511946789007", "esmalteriamaosdeseda"),
+                    createSeedCompany(admin, "Olhar Perfeito Sobrancelhas", "Beleza", "Manicure", BEL_2,
+                            "Design personalizado com henna, brow lamination, lash lifting e micropigmentação.",
+                            "(11) 94678-9008", "5511946789008", "olharperfeito.sede"),
+                    // Beleza — Estética
+                    createSeedCompany(admin, "Clínica Bem-Estar Estética", "Beleza", "Estética", BEL_1,
+                            "Limpeza de pele profunda, drenagem linfática, massagem relaxante e cuidados faciais.",
+                            "(11) 94789-0109", "5511947890109", "clinicabemestar.sede"),
+                    createSeedCompany(admin, "Toque Sereno Massoterapia", "Beleza", "Estética", BEL_3,
+                            "Massagem modeladora, ventosaterapia, liberação miofascial e relaxamento antiestresse.",
+                            "(11) 94789-0110", "5511947890110", "toquesereno.massa"),
+                    createSeedCompany(admin, "Pele Viva Dermocosméticos", "Beleza", "Estética", BEL_2,
+                            "Peeling suave, hidratação facial revitalizante e protocolos personalizados de autocuidado.",
+                            "(11) 94789-0111", "5511947890111", "peleviva.sede"),
+
+                    // Vestuário — Moda
+                    createSeedCompany(admin, "Ateliê & Moda Local", "Vestuário", "Moda", VES_1,
+                            "Roupas casuais masculinas e femininas, confecção própria, ajustes sob medida e peças exclusivas.",
+                            "(11) 96543-2109", "5511965432109", "ateliemodalocal"),
+                    createSeedCompany(admin, "Costura & Capricho Ateliê", "Vestuário", "Moda", VES_3,
+                            "Bainhas rápidas, troca de zíperes, ajuste de vestidos de festa e reformas em roupas.",
+                            "(11) 96543-2110", "5511965432110", "costuraecapricho.sede"),
+                    createSeedCompany(admin, "Villa Chic Boutique", "Vestuário", "Moda", VES_2,
+                            "Vestidos, blusas em linho, conjuntos elegantes e atendimento personalizado no bairro.",
+                            "(11) 96543-2111", "5511965432111", "villachic.boutique"),
+                    // Vestuário — Fitness
+                    createSeedCompany(admin, "Urbano Fit & Esportes", "Vestuário", "Fitness", VES_2,
+                            "Moda fitness, camisetas dry-fit, conjuntos esportivos masculinos e femininos e acessórios para treino e corrida.",
+                            "(11) 93789-0107", "5511937890107", "urbanofit.sede"),
+                    createSeedCompany(admin, "Movimento Ativo Wear", "Vestuário", "Fitness", VES_1,
+                            "Leggings de alta compressão, tops sustentáveis, shorts de corrida e garrafas térmicas.",
+                            "(11) 93789-0108", "5511937890108", "movimentoativo.wear"),
+                    createSeedCompany(admin, "Arena Sports Vestuário", "Vestuário", "Fitness", VES_3,
+                            "Agasalhos, meiões, camisetas térmicas, bermudas esportivas e artigos para futebol e academia.",
+                            "(11) 93789-0109", "5511937890109", "arenasports.sede"),
+                    // Vestuário — Casual
+                    createSeedCompany(admin, "Villa Jeans & Casual", "Vestuário", "Casual", VES_3,
+                            "Calças jeans premium, jaquetas, camisas sociais e looks casuais completos com variedade de numerações.",
+                            "(11) 92890-1208", "5511928901208", "villajeans.oficial"),
+                    createSeedCompany(admin, "Denim & Rua Confecções", "Vestuário", "Casual", VES_1,
+                            "Jeans stretch masculino e feminino, jaquetas sarja e camisetas básicas de algodão.",
+                            "(11) 92890-1209", "5511928901209", "denimerua.sede"),
+                    createSeedCompany(admin, "Ponto Casual Moda Dia", "Vestuário", "Casual", VES_2,
+                            "Polos, bermudas chino, camisas estampadas e peças confortáveis para trabalho e lazer.",
+                            "(11) 92890-1210", "5511928901210", "pontocasual.sede"),
+                    // Vestuário — Acessórios
+                    createSeedCompany(admin, "Mundo Pequeno Moda Infantil", "Vestuário", "Acessórios", VES_1,
+                            "Roupas confortáveis do recém-nascido aos 12 anos, conjuntos escolares e enxoval completo.",
+                            "(11) 92901-2311", "5511929012311", "mundopequeno.infantil"),
+                    createSeedCompany(admin, "Passos & Bolsas Acessórios", "Vestuário", "Acessórios", VES_2,
+                            "Bolsas transversais, mochilas, cintos de couro, carteiras e óculos de sol.",
+                            "(11) 92901-2312", "5511929012312", "passosebolsas.sede"),
+                    createSeedCompany(admin, "Brilho & Laço Acessórios", "Vestuário", "Acessórios", VES_3,
+                            "Semijoias hipoalergênicas, presilhas, lenços, bonés e kits de acessórios para todas as idades.",
+                            "(11) 92901-2313", "5511929012313", "brilhoelaco.sede")
+            ));
         };
+    }
+
+    private Company createSeedCompany(
+            UserAccount owner,
+            String name,
+            String category,
+            String subsegment,
+            String logoUrl,
+            String description,
+            String phone,
+            String whatsapp,
+            String instagram
+    ) {
+        Company company = new Company();
+        company.setName(name);
+        company.setCategory(category);
+        company.setSubsegment(subsegment);
+        company.setLogoUrl(logoUrl);
+        company.setDescription(description);
+        company.setOwnerName(owner.getName() != null && !"Administrador Único".equals(owner.getName()) ? owner.getName() : "Empreendedor Local");
+        company.setCep("01310-100");
+        company.setStreet("Av. Paulista");
+        company.setAddressNumber("100");
+        company.setNeighborhood("Bela Vista");
+        company.setCity("São Paulo");
+        company.setState("SP");
+        company.setAddressStatus("CONFIRMED_BY_CEP");
+        company.setAddressConfirmed(true);
+        company.setPhone(phone);
+        company.setWhatsapp(whatsapp);
+        company.setInstagram(instagram);
+        company.setOwnerId(owner.getId());
+        company.setOwnerEmail(owner.getEmail());
+        company.setApproved(true);
+        company.setPaymentStatus("EXEMPT");
+        return company;
     }
 }

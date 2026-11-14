@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public final class AuthDtos {
@@ -39,12 +40,20 @@ public final class AuthDtos {
             String token
     ) {}
 
+    public record UpdateAvatarRequest(
+            String avatarUrl
+    ) {}
+
     public record UserInfo(
             UUID id,
             String name,
             String email,
             String role,
-            String authProvider
+            String authProvider,
+            String avatarUrl,
+            OffsetDateTime subscriptionExpiresAt,
+            boolean expired,
+            Long daysRemaining
     ) {}
 
     public record AuthResponse(

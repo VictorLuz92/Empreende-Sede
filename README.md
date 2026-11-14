@@ -3,7 +3,7 @@
 Vitrine digital de empresas locais construída conforme o wireframe enviado, utilizando:
 
 - **Visual:** HTML5 e CSS3
-- **Frontend:** JavaScript Vanilla
+- **Frontend:** React 18 + Vite
 - **Backend:** Java 17 (LTS) + Spring Boot 3.3.5 (LTS-compatible)
 - **Banco de Dados:** Supabase (PostgreSQL) — com perfil `dev` em memória (H2) para testes locais imediatos
 
@@ -15,12 +15,18 @@ Vitrine digital de empresas locais construída conforme o wireframe enviado, uti
 │   ├── pom.xml
 │   ├── .env.example
 │   └── src/
-├── frontend/                 # Interface HTML, CSS e JavaScript Vanilla
+├── frontend/                 # Interface React + Vite
 │   ├── index.html
-│   ├── css/styles.css
-│   └── js/
-│       ├── api.js
-│       └── app.js
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── .env.example
+│   └── src/
+│       ├── components/
+│       ├── constants/
+│       ├── pages/
+│       ├── services/
+│       ├── styles/
+│       └── utils/
 └── supabase/
     └── schema.sql            # Script SQL para criar tabelas e dados no Supabase
 ```
@@ -62,7 +68,13 @@ A API ficará disponível em `http://localhost:8080/api/companies`.
 
 ## 3. Executando o Frontend
 
-Abra o arquivo [`frontend/index.html`](frontend/index.html) no navegador (ou via Live Server / servidor estático, por exemplo `npx serve frontend`).
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+O servidor Vite iniciará em `http://localhost:5173` (com proxy `/api` configurado para `http://localhost:8080`).
 
 > **Nota:** Caso a API Spring Boot ainda não esteja rodando na porta `8080`, o frontend entra automaticamente em **modo demonstração offline** usando `localStorage`, permitindo visualizar e testar toda a interface imediatamente.
 # Empreende-Sede

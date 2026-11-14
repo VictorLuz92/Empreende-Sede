@@ -1,4 +1,4 @@
-:root {
+.admin-page-root {
     --bg: #f1f5f9;
     --surface: #ffffff;
     --subtle: #f8fafc;
@@ -10,34 +10,21 @@
     --accent-soft: #e8f5f0;
     --danger: #dc2626;
     --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    width: 100%;
+    min-height: 100vh;
     background: var(--bg);
     color: var(--text);
-    min-height: 100vh;
-}
-
-.hidden {
-    display: none !important;
 }
 
 /* Login */
-.admin-login-screen {
+.admin-page-root .admin-login-screen {
     min-height: 100vh;
     display: grid;
     place-items: center;
     padding: 20px;
 }
 
-.login-card {
+.admin-page-root .login-card {
     width: 100%;
     max-width: 420px;
     background: var(--surface);
@@ -50,7 +37,7 @@ body {
     gap: 14px;
 }
 
-.login-badge {
+.admin-page-root .login-badge {
     align-self: flex-start;
     font-size: 0.74rem;
     font-weight: 700;
@@ -62,23 +49,23 @@ body {
     color: var(--accent);
 }
 
-.login-card h1 {
+.admin-page-root .login-card h1 {
     font-size: 1.35rem;
 }
 
-.login-subtitle {
+.admin-page-root .login-subtitle {
     font-size: 0.88rem;
     line-height: 1.5;
     color: var(--muted);
 }
 
-.admin-form {
+.admin-page-root .admin-form {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.admin-form label {
+.admin-page-root .admin-form label {
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -86,7 +73,7 @@ body {
     font-weight: 600;
 }
 
-.admin-form input {
+.admin-page-root .admin-form input {
     border: 1.5px solid var(--border);
     border-radius: 10px;
     padding: 10px 12px;
@@ -95,11 +82,11 @@ body {
     outline: none;
 }
 
-.admin-form input:focus {
+.admin-page-root .admin-form input:focus {
     border-color: var(--accent);
 }
 
-.alert-error {
+.admin-page-root .alert-error {
     background: #fef2f2;
     border: 1px solid #fecaca;
     color: #b91c1c;
@@ -109,7 +96,7 @@ body {
 }
 
 /* Shell Administrativo */
-.admin-shell {
+.admin-page-root .admin-shell {
     min-height: 100vh;
     padding: 24px 32px 40px;
     max-width: 1280px;
@@ -119,7 +106,7 @@ body {
     gap: 22px;
 }
 
-.admin-topbar {
+.admin-page-root .admin-topbar {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
@@ -131,13 +118,13 @@ body {
     flex-wrap: wrap;
 }
 
-.admin-brand {
+.admin-page-root .admin-brand {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.shield-badge {
+.admin-page-root .shield-badge {
     width: 44px;
     height: 44px;
     border-radius: 12px;
@@ -147,28 +134,28 @@ body {
     font-size: 1.35rem;
 }
 
-.admin-brand h1 {
+.admin-page-root .admin-brand h1 {
     font-size: 1.15rem;
 }
 
-.admin-identity {
+.admin-page-root .admin-identity {
     font-size: 0.82rem;
     color: var(--muted);
 }
 
-.topbar-actions {
+.admin-page-root .topbar-actions {
     display: flex;
     gap: 10px;
 }
 
 /* Resumo */
-.stats-grid {
+.admin-page-root .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 14px;
 }
 
-.stat-card {
+.admin-page-root .stat-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -178,25 +165,25 @@ body {
     gap: 6px;
 }
 
-.stat-label {
+.admin-page-root .stat-label {
     font-size: 0.8rem;
     color: var(--muted);
     font-weight: 600;
 }
 
-.stat-value {
+.admin-page-root .stat-value {
     font-size: 1.75rem;
     color: var(--text);
 }
 
 /* Abas */
-.admin-tabs {
+.admin-page-root .admin-tabs {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
 }
 
-.tab-btn {
+.admin-page-root .tab-btn {
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--muted);
@@ -208,20 +195,20 @@ body {
     cursor: pointer;
 }
 
-.tab-btn.active {
+.admin-page-root .tab-btn.active {
     background: var(--accent);
     border-color: var(--accent);
     color: #ffffff;
 }
 
 /* Cards de Lojas / Aprovações */
-.cards-grid {
+.admin-page-root .cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px;
 }
 
-.empty-box {
+.admin-page-root .empty-box {
     grid-column: 1 / -1;
     background: var(--surface);
     border: 1.5px dashed var(--border);
@@ -232,7 +219,7 @@ body {
     font-size: 0.94rem;
 }
 
-.store-card {
+.admin-page-root .store-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
@@ -243,7 +230,7 @@ body {
     box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
 }
 
-.store-card-top {
+.admin-page-root .store-card-top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -251,7 +238,7 @@ body {
     flex-wrap: wrap;
 }
 
-.badge {
+.admin-page-root .badge {
     font-size: 0.72rem;
     font-weight: 700;
     padding: 3px 9px;
@@ -259,18 +246,18 @@ body {
     text-transform: uppercase;
 }
 
-.badge-create { background: #dcfce7; color: #166534; }
-.badge-edit { background: #dbeafe; color: #1e40af; }
-.badge-renew { background: #fef3c7; color: #92400e; }
-.badge-danger { background: #fee2e2; color: #b91c1c; }
+.admin-page-root .badge-create { background: #dcfce7; color: #166534; }
+.admin-page-root .badge-edit { background: #dbeafe; color: #1e40af; }
+.admin-page-root .badge-renew { background: #fef3c7; color: #92400e; }
+.admin-page-root .badge-danger { background: #fee2e2; color: #b91c1c; }
 
-.store-body {
+.admin-page-root .store-body {
     display: flex;
     gap: 12px;
     align-items: flex-start;
 }
 
-.store-thumb {
+.admin-page-root .store-thumb {
     width: 96px;
     height: 72px;
     object-fit: cover;
@@ -279,7 +266,7 @@ body {
     flex-shrink: 0;
 }
 
-.store-meta {
+.admin-page-root .store-meta {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -289,12 +276,12 @@ body {
     overflow-wrap: anywhere;
 }
 
-.store-meta h3 {
+.admin-page-root .store-meta h3 {
     font-size: 1rem;
     color: var(--text);
 }
 
-.pix-proof-box {
+.admin-page-root .pix-proof-box {
     background: var(--subtle);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -305,7 +292,7 @@ body {
     gap: 3px;
 }
 
-.store-actions {
+.admin-page-root .store-actions {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
@@ -314,9 +301,9 @@ body {
     border-top: 1px solid #e2e8f0;
 }
 
-.btn-primary,
-.btn-secondary,
-.btn-danger {
+.admin-page-root .btn-primary,
+.admin-page-root .btn-secondary,
+.admin-page-root .btn-danger {
     border: none;
     border-radius: 10px;
     padding: 9px 14px;
@@ -326,13 +313,13 @@ body {
     cursor: pointer;
 }
 
-.btn-primary { background: var(--accent); color: #ffffff; }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-secondary { background: var(--subtle); color: var(--text); border: 1px solid var(--border); }
-.btn-danger { background: #fee2e2; color: var(--danger); }
-.btn-danger:hover { background: #fecaca; }
+.admin-page-root .btn-primary { background: var(--accent); color: #ffffff; }
+.admin-page-root .btn-primary:hover { background: var(--accent-hover); }
+.admin-page-root .btn-secondary { background: var(--subtle); color: var(--text); border: 1px solid var(--border); }
+.admin-page-root .btn-danger { background: #fee2e2; color: var(--danger); }
+.admin-page-root .btn-danger:hover { background: #fecaca; }
 
-.toast {
+.admin-page-root .toast {
     position: fixed;
     bottom: 20px;
     left: 50%;
@@ -348,10 +335,119 @@ body {
 }
 
 @media (max-width: 600px) {
-    .admin-shell {
+    .admin-page-root .admin-shell {
         padding: 14px;
     }
-    .cards-grid {
+    .admin-page-root .cards-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Agrupamento por tipo de serviço em Todas as Lojas */
+.admin-page-root .admin-service-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.admin-page-root .admin-group-jump-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+}
+
+.admin-page-root .admin-jump-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--subtle);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.admin-page-root .admin-jump-pill:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+}
+
+.admin-page-root .admin-jump-pill span {
+    background: rgba(15, 23, 42, 0.08);
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+}
+
+.admin-page-root .admin-jump-pill:hover span {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.admin-page-root .admin-service-group {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    scroll-margin-top: 16px;
+}
+
+.admin-page-root .admin-service-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+}
+
+.admin-page-root .admin-service-group-header h3 {
+    margin: 0;
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.admin-page-root .admin-service-group-count {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--subtle);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.admin-page-root .address-request-box {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.84rem;
+    color: #78350f;
+}
+
+.admin-page-root .address-request-box p {
+    margin: 0;
+}
+
+.admin-page-root .address-alert-box {
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
 }

@@ -35,6 +35,12 @@ public class UserAccount {
     @Column(nullable = false, length = 30)
     private String role = "USER";
 
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
+    private String avatarUrl;
+
+    @Column(name = "subscription_expires_at")
+    private OffsetDateTime subscriptionExpiresAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -99,6 +105,22 @@ public class UserAccount {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public OffsetDateTime getSubscriptionExpiresAt() {
+        return subscriptionExpiresAt;
+    }
+
+    public void setSubscriptionExpiresAt(OffsetDateTime subscriptionExpiresAt) {
+        this.subscriptionExpiresAt = subscriptionExpiresAt;
     }
 
     public OffsetDateTime getCreatedAt() {
