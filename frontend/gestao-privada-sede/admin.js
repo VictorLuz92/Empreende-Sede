@@ -3,6 +3,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const ADMIN_API = `${API_ORIGIN}/api/admin`;
     const TOKEN_KEY = "empreende_sede_admin_token";
     const EMAIL_KEY = "empreende_sede_admin_email";
+    const OFFICIAL_SERVICE_CATEGORIES = [
+        "Mão de Obra",
+        "Comércio",
+        "Gastronomia",
+        "Beleza (Masculina/Feminina)",
+        "Vestuário",
+    ];
 
     const el = {
         adminLoginScreen: document.getElementById("adminLoginScreen"),
@@ -198,6 +205,111 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    function buildAllStoreCard(item) {
+        const isExpired = Boolean(item.expired);
+        const card = document.createElement("article");
+        card.className = "store-card";
+
+        let statusBadge = `<span class="badge badge-create">Publicada</span>`;
+        if (!item.approved) statusBadge = `<span class="badge badge-renew">Não aprovada</span>`;
+        else if (isExpired) statusBadge = `<span class="badge badge-danger">Expirada</span>`;
+
+        const expInfo = item.subscriptionExpiresAt
+            ? `${new Date(item.subscriptionExpiresAt).toLocaleDateString("pt-BR")} (${item.daysRemaining} dias)`
+            : "Sem expiração (Seed/Adm)";
+
+        const top = document.createElement("div");
+        top.className = "store-card-top";
+        top.innerHTML = `${statusBadge}<span class="badge">${escapeHtml(item.paymentStatus)}</span>`;
+
+        const body = document.createElement("div");
+        body.className = "store-body";
+        if (item.logoUrl) {
+            const img = document.createElement("img");
+            img.src = item.logoUrl;
+            img.alt = item.name;
+            img.className = "store-thumb";
+            body.appendChild(img);
+        }
+
+        const categoryLabel = item.subsegment
+            ? `${item.category || "Outros"} (${item.subsegment})`
+            : item.category || "Outros";
+
+        const meta = document.createElement("div");
+        meta.className = "store-meta";
+        meta.innerHTML = `
+            <h3>${escapeHtml(item.name)}</h3>
+            <p><strong>Dono:</strong> ${escapeHtml(item.ownerEmail || "Adm")}</p>
+            <p><strong>Serviço:</strong> ${escapeHtml(categoryLabel)} &bull; ${escapeHtml(item.phone)}</p>
+            <p><strong>Validade:</strong> ${escapeHtml(expInfo)}</p>
+        `;
+        body.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "store-actions";
+
+        const renewBtn = document.createElement("button");
+        renewBtn.type = "button";
+        renewBtn.className = "btn-secondary";
+        renewBtn.textContent = "+ 30 dias (Pix)";
+        renewBtn.addEventListener("click", async () => {
+            const confirmed = confirm(
+                `Confirmar +30 dias (Pix) para a loja "${item.name}"?\n\n`
+                + `Serviço: ${categoryLabel}\n`
+                + `Dono: ${item.ownerEmail || "Adm"}\n`
+                + `Validade atual: ${expInfo}`
+            );
+            if (!confirmed) return;
+
+            try {
+                await apiFetch(`/companies/${item.id}/renew`, { method: "POST" });
+                showToast(`Plano de "${item.name}" estendido em +30 dias!`);
+                await loadAdminData();
+            } catch (err) {
+                showToast(err.message);
+            }
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn-danger";
+        delBtn.textContent = "Remover";
+        delBtn.addEventListener("click", async () => {
+            if (!confirm(`Remover "${item.name}" da vitrine?`)) return;
+            try {
+                await apiFetch(`/companies/${item.id}`, { method: "DELETE" });
+                showToast("Loja removida.");
+                await loadAdminData();
+            } catch (err) {
+                showToast(err.message);
+            }
+        });
+
+        actions.appendChild(renewBtn);
+        actions.appendChild(delBtn);
+
+        card.appendChild(top);
+        card.appendChild(body);
+        card.appendChild(actions);
+        return card;
+    }
+
+    function groupStoresByService(items) {
+        const groupedMap = new Map();
+        OFFICIAL_SERVICE_CATEGORIES.forEach((cat) => groupedMap.set(cat, []));
+
+        items.forEach((item) => {
+            const cat = (item.category || "").trim() || "Outros";
+            if (!groupedMap.has(cat)) {
+                groupedMap.set(cat, []);
+            }
+            groupedMap.get(cat).push(item);
+        });
+
+        return Array.from(groupedMap.entries()).filter(([, groupItems]) => groupItems.length > 0);
+    }
+
     function renderAllStores(items) {
         el.allStoresList.innerHTML = "";
         el.tabAllBadge.textContent = String(items.length);
@@ -210,85 +322,63 @@ document.addEventListener("DOMContentLoaded", () => {
             const isPublished = item.approved && !isExpired;
             if (isPublished) published += 1;
             if (isExpired || item.paymentStatus === "PENDING_PAYMENT") expiredOrUnpaid += 1;
-
-            const card = document.createElement("article");
-            card.className = "store-card";
-
-            let statusBadge = `<span class="badge badge-create">Publicada</span>`;
-            if (!item.approved) statusBadge = `<span class="badge badge-renew">Não aprovada</span>`;
-            else if (isExpired) statusBadge = `<span class="badge badge-danger">Expirada</span>`;
-
-            const expInfo = item.subscriptionExpiresAt
-                ? `${new Date(item.subscriptionExpiresAt).toLocaleDateString("pt-BR")} (${item.daysRemaining} dias)`
-                : "Sem expiração (Seed/Adm)";
-
-            const top = document.createElement("div");
-            top.className = "store-card-top";
-            top.innerHTML = `${statusBadge}<span class="badge">${escapeHtml(item.paymentStatus)}</span>`;
-
-            const body = document.createElement("div");
-            body.className = "store-body";
-            if (item.logoUrl) {
-                const img = document.createElement("img");
-                img.src = item.logoUrl;
-                img.alt = item.name;
-                img.className = "store-thumb";
-                body.appendChild(img);
-            }
-
-            const meta = document.createElement("div");
-            meta.className = "store-meta";
-            meta.innerHTML = `
-                <h3>${escapeHtml(item.name)}</h3>
-                <p><strong>Dono:</strong> ${escapeHtml(item.ownerEmail || "Adm")}</p>
-                <p><strong>Categoria:</strong> ${escapeHtml(item.category)} &bull; ${escapeHtml(item.phone)}</p>
-                <p><strong>Validade:</strong> ${escapeHtml(expInfo)}</p>
-            `;
-            body.appendChild(meta);
-
-            const actions = document.createElement("div");
-            actions.className = "store-actions";
-
-            const renewBtn = document.createElement("button");
-            renewBtn.type = "button";
-            renewBtn.className = "btn-secondary";
-            renewBtn.textContent = "+ 30 dias (Pix)";
-            renewBtn.addEventListener("click", async () => {
-                try {
-                    await apiFetch(`/companies/${item.id}/renew`, { method: "POST" });
-                    showToast(`Plano de "${item.name}" estendido em +30 dias!`);
-                    await loadAdminData();
-                } catch (err) {
-                    showToast(err.message);
-                }
-            });
-
-            const delBtn = document.createElement("button");
-            delBtn.type = "button";
-            delBtn.className = "btn-danger";
-            delBtn.textContent = "Remover";
-            delBtn.addEventListener("click", async () => {
-                if (!confirm(`Remover "${item.name}" da vitrine?`)) return;
-                try {
-                    await apiFetch(`/companies/${item.id}`, { method: "DELETE" });
-                    showToast("Loja removida.");
-                    await loadAdminData();
-                } catch (err) {
-                    showToast(err.message);
-                }
-            });
-
-            actions.appendChild(renewBtn);
-            actions.appendChild(delBtn);
-
-            card.appendChild(top);
-            card.appendChild(body);
-            card.appendChild(actions);
-            el.allStoresList.appendChild(card);
         });
 
         el.statPublishedCount.textContent = String(published);
         el.statExpiredCount.textContent = String(expiredOrUnpaid);
+
+        if (!items.length) {
+            el.allStoresList.innerHTML = `<div class="empty-box">Nenhuma loja cadastrada ainda.</div>`;
+            return;
+        }
+
+        const groups = groupStoresByService(items);
+
+        const jumpNav = document.createElement("nav");
+        jumpNav.className = "admin-group-jump-nav";
+        jumpNav.setAttribute("aria-label", "Ir para tipo de serviço");
+
+        const groupsWrapper = document.createDocumentFragment();
+
+        groups.forEach(([category, groupItems], idx) => {
+            const sectionId = `admin-service-group-${idx}`;
+
+            const jumpBtn = document.createElement("button");
+            jumpBtn.type = "button";
+            jumpBtn.className = "admin-jump-pill";
+            jumpBtn.innerHTML = `${escapeHtml(category)} <span>${groupItems.length}</span>`;
+            jumpBtn.addEventListener("click", () => {
+                const target = document.getElementById(sectionId);
+                if (target) {
+                    target.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            });
+            jumpNav.appendChild(jumpBtn);
+
+            const section = document.createElement("section");
+            section.id = sectionId;
+            section.className = "admin-service-group";
+
+            const header = document.createElement("div");
+            header.className = "admin-service-group-header";
+            header.innerHTML = `
+                <h3>${escapeHtml(category)}</h3>
+                <span class="admin-service-group-count">${groupItems.length} ${groupItems.length === 1 ? "loja" : "lojas"}</span>
+            `;
+
+            const grid = document.createElement("div");
+            grid.className = "cards-grid";
+            groupItems.forEach((item) => {
+                grid.appendChild(buildAllStoreCard(item));
+            });
+
+            section.appendChild(header);
+            section.appendChild(grid);
+            groupsWrapper.appendChild(section);
+        });
+
+        el.allStoresList.appendChild(jumpNav);
+        el.allStoresList.appendChild(groupsWrapper);
     }
 
     async function loadAdminData() {
