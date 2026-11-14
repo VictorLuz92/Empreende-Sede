@@ -15,10 +15,35 @@ public record CompanyResponse(
         String whatsapp,
         String instagram,
         boolean active,
+        boolean approved,
+        boolean hasPendingUpdate,
+        PendingData pendingData,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {
+    public record PendingData(
+            String name,
+            String category,
+            String logoUrl,
+            String description,
+            String phone,
+            String whatsapp,
+            String instagram
+    ) {}
+
     public static CompanyResponse fromEntity(Company company) {
+        PendingData pending = company.isHasPendingUpdate()
+                ? new PendingData(
+                        company.getPendingName(),
+                        company.getPendingCategory(),
+                        company.getPendingLogoUrl(),
+                        company.getPendingDescription(),
+                        company.getPendingPhone(),
+                        company.getPendingWhatsapp(),
+                        company.getPendingInstagram()
+                )
+                : null;
+
         return new CompanyResponse(
                 company.getId(),
                 company.getName(),
@@ -29,6 +54,9 @@ public record CompanyResponse(
                 company.getWhatsapp(),
                 company.getInstagram(),
                 company.isActive(),
+                company.isApproved(),
+                company.isHasPendingUpdate(),
+                pending,
                 company.getCreatedAt(),
                 company.getUpdatedAt()
         );

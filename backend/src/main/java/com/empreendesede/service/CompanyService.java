@@ -27,10 +27,17 @@ public class CompanyService {
 
         List<Company> companies = (normalizedQuery == null || normalizedQuery.isEmpty())
                 && (normalizedCategory == null || normalizedCategory.isEmpty())
-                ? companyRepository.findByActiveTrueOrderByNameAsc()
+                ? companyRepository.findByActiveTrueAndApprovedTrueOrderByNameAsc()
                 : companyRepository.searchActiveCompanies(normalizedQuery, normalizedCategory);
 
         return companies.stream()
+                .map(CompanyResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CompanyResponse> listPendingApprovals() {
+        return companyRepository.findPendingApprovals().stream()
                 .map(CompanyResponse::fromEntity)
                 .toList();
     }
@@ -47,18 +54,76 @@ public class CompanyService {
     }
 
     @Transactional
-    public CompanyResponse create(CompanyRequest request) {
+    public CompanyResponse create(CompanyRequest request, boolean isAdmin) {
         Company company = new Company();
         applyRequest(company, request);
         company.setActive(true);
+        company.setApproved(isAdmin);
+        company.setHasPendingUpdate(false);
         return CompanyResponse.fromEntity(companyRepository.save(company));
     }
 
     @Transactional
-    public CompanyResponse update(UUID id, CompanyRequest request) {
+    public CompanyResponse update(UUID id, CompanyRequest request, boolean isAdmin) {
         Company company = findActiveOrThrow(id);
-        applyRequest(company, request);
+        if (isAdmin) {
+            applyRequest(company, request);
+            clearPendingFields(company);
+            company.setApproved(true);
+        } else {
+            company.setPendingName(request.name().trim());
+            company.setPendingCategory(
+                    request.category() != null && !request.category().isBlank()
+                            ? request.category().trim()
+                            : "Geral"
+            );
+            company.setPendingLogoUrl(request.logoUrl() != null && !request.logoUrl().isBlank() ? request.logoUrl().trim() : null);
+            company.setPendingDescription(request.description().trim());
+            company.setPendingPhone(request.phone().trim());
+            company.setPendingWhatsapp(sanitizeWhatsapp(request.whatsapp()));
+            company.setPendingInstagram(sanitizeInstagram(request.instagram()));
+            company.setHasPendingUpdate(true);
+        }
         return CompanyResponse.fromEntity(companyRepository.save(company));
+    }
+
+    @Transactional
+    public CompanyResponse approve(UUID id) {
+        Company company = findActiveOrThrow(id);
+        if (company.isHasPendingUpdate()) {
+            company.setName(company.getPendingName());
+            company.setCategory(company.getPendingCategory() != null ? company.getPendingCategory() : "Geral");
+            company.setLogoUrl(company.getPendingLogoUrl());
+            company.setDescription(company.getPendingDescription());
+            company.setPhone(company.getPendingPhone());
+            company.setWhatsapp(company.getPendingWhatsapp());
+            company.setInstagram(company.getPendingInstagram());
+            clearPendingFields(company);
+        }
+        company.setApproved(true);
+        return CompanyResponse.fromEntity(companyRepository.save(company));
+    }
+
+    @Transactional
+    public void reject(UUID id) {
+        Company company = findActiveOrThrow(id);
+        if (!company.isApproved()) {
+            company.setActive(false);
+        } else {
+            clearPendingFields(company);
+        }
+        companyRepository.save(company);
+    }
+
+    private void clearPendingFields(Company company) {
+        company.setHasPendingUpdate(false);
+        company.setPendingName(null);
+        company.setPendingCategory(null);
+        company.setPendingLogoUrl(null);
+        company.setPendingDescription(null);
+        company.setPendingPhone(null);
+        company.setPendingWhatsapp(null);
+        company.setPendingInstagram(null);
     }
 
     @Transactional

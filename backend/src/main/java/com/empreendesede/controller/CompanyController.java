@@ -47,15 +47,38 @@ public class CompanyController {
         return companyService.listCategories();
     }
 
+    @GetMapping("/pending")
+    public List<CompanyResponse> listPending() {
+        return companyService.listPendingApprovals();
+    }
+
     @PostMapping
-    public ResponseEntity<CompanyResponse> create(@Valid @RequestBody CompanyRequest request) {
-        CompanyResponse created = companyService.create(request);
+    public ResponseEntity<CompanyResponse> create(
+            @Valid @RequestBody CompanyRequest request,
+            @RequestParam(name = "role", defaultValue = "USER") String role
+    ) {
+        CompanyResponse created = companyService.create(request, "ADMIN".equalsIgnoreCase(role));
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public CompanyResponse update(@PathVariable("id") UUID id, @Valid @RequestBody CompanyRequest request) {
-        return companyService.update(id, request);
+    public CompanyResponse update(
+            @PathVariable("id") UUID id,
+            @Valid @RequestBody CompanyRequest request,
+            @RequestParam(name = "role", defaultValue = "USER") String role
+    ) {
+        return companyService.update(id, request, "ADMIN".equalsIgnoreCase(role));
+    }
+
+    @PostMapping("/{id}/approve")
+    public CompanyResponse approve(@PathVariable("id") UUID id) {
+        return companyService.approve(id);
+    }
+
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<Void> reject(@PathVariable("id") UUID id) {
+        companyService.reject(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
