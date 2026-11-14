@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getInitials } from "../utils/formatters";
+import { formatCompanyAddress, getInitials } from "../utils/formatters";
 
 export default function CompanyShowcase({
     hasLoadedOnce,
@@ -98,6 +98,26 @@ export default function CompanyShowcase({
                     </div>
 
                     <p className="company-description">{company.description}</p>
+
+                    <div className="company-extra-details">
+                        {company.ownerName && (
+                            <p className="company-detail-line">
+                                <strong>Proprietário:</strong> {company.ownerName}
+                            </p>
+                        )}
+                        {company.street && (
+                            <p className="company-detail-line">
+                                <strong>Endereço:</strong> {formatCompanyAddress(company)}{" "}
+                                <span
+                                    className={`address-mini-badge${company.addressStatus === "PENDING_ADMIN_CONFIRMATION" ? " pending" : ""}`}
+                                >
+                                    {company.addressStatus === "PENDING_ADMIN_CONFIRMATION"
+                                        ? "⏳ Endereço em confirmação pelo Adm"
+                                        : "✓ Endereço confirmado"}
+                                </span>
+                            </p>
+                        )}
+                    </div>
 
                     {canEditCurrent && company.hasPendingUpdate && (
                         <div className="company-pending-notice">

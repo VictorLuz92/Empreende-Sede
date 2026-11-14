@@ -330,6 +330,7 @@ export default function ShowcasePage() {
             <CompanyFormModal
                 isOpen={companyFormState.open}
                 editingCompany={companyFormState.company}
+                currentUserName={user?.name || ""}
                 subsegmentsMap={subsegmentsMap}
                 onClose={() => setCompanyFormState({ open: false, company: null })}
                 onSaved={handleCompanySaved}

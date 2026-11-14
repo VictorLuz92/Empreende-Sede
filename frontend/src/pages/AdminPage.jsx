@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { OFFICIAL_SERVICE_CATEGORIES } from "../constants/services";
 import { AdminApi } from "../services/api";
+import { formatCompanyAddress } from "../utils/formatters";
 import "../styles/admin.css";
 
 function getPendingBadge(item) {
@@ -48,6 +49,7 @@ export default function AdminPage() {
 
     const [activeTab, setActiveTab] = useState("pending");
     const [pendingItems, setPendingItems] = useState([]);
+    const [addressRequests, setAddressRequests] = useState([]);
     const [allItems, setAllItems] = useState([]);
 
     const [toastMsg, setToastMsg] = useState("");
@@ -68,16 +70,19 @@ export default function AdminPage() {
         AdminApi.clearSession();
         setIsAuthenticated(false);
         setPendingItems([]);
+        setAddressRequests([]);
         setAllItems([]);
     }, []);
 
     const loadAdminData = useCallback(async () => {
         try {
-            const [pending, all] = await Promise.all([
+            const [pending, addresses, all] = await Promise.all([
                 AdminApi.getPending(),
+                AdminApi.getAddressRequests(),
                 AdminApi.getAllCompanies()
             ]);
             setPendingItems(pending);
+            setAddressRequests(addresses);
             setAllItems(all);
         } catch (err) {
             if (err.isAuthError) {
@@ -111,7 +116,25 @@ export default function AdminPage() {
     async function handleApprove(item, displayName) {
         try {
             await AdminApi.approveCompany(item.id);
-            showToast(`"${displayName}" aprovada com sucesso!`);
+            showToast(`"${displayName}" aprovada com Pix confirmado (+30 dias)!`);
+            await loadAdminData();
+        } catch (err) {
+            showToast(err.message);
+        }
+    }
+
+    async function handleConfirmAddress(item, addrSource, displayName) {
+        const confirmed = window.confirm(
+            `Confirmar o endereço da loja "${displayName}"?\n\n`
+            + `Proprietário: ${addrSource.ownerName || item.ownerEmail || "N/A"}\n`
+            + `CEP: ${addrSource.cep || "Não informado"}\n`
+            + `Endereço: ${formatCompanyAddress(addrSource)}`
+        );
+        if (!confirmed) return;
+
+        try {
+            await AdminApi.confirmAddress(item.id);
+            showToast(`Endereço de "${displayName}" confirmado com sucesso!`);
             await loadAdminData();
         } catch (err) {
             showToast(err.message);
@@ -133,7 +156,7 @@ export default function AdminPage() {
         const confirmed = window.confirm(
             `Confirmar +30 dias (Pix) para a loja "${item.name}"?\n\n`
             + `Serviço: ${categoryLabel}\n`
-            + `Dono: ${item.ownerEmail || "Adm"}\n`
+            + `Proprietário: ${item.ownerName || item.ownerEmail || "Adm"}\n`
             + `Validade atual: ${expInfo}`
         );
         if (!confirmed) return;
@@ -181,7 +204,7 @@ export default function AdminPage() {
                         <div className="login-badge">Acesso Restrito</div>
                         <h1>Painel do Administrador</h1>
                         <p className="login-subtitle">
-                            Apenas o administrador único do Empreende Sede pode aprovar lojas, validar pagamentos Pix (R$ 50,00/mês) e publicar alterações.
+                            Apenas o administrador único do Empreende Sede pode aprovar lojas, validar pagamentos Pix (R$ 50,00/mês), confirmar endereços e publicar alterações.
                         </p>
 
                         {loginError && (
@@ -253,6 +276,10 @@ export default function AdminPage() {
                             <strong className="stat-value">{pendingItems.length}</strong>
                         </div>
                         <div className="stat-card">
+                            <span className="stat-label">Confirmações de Endereço</span>
+                            <strong className="stat-value">{addressRequests.length}</strong>
+                        </div>
+                        <div className="stat-card">
                             <span className="stat-label">Lojas Ativas na Vitrine</span>
                             <strong className="stat-value">{publishedCount}</strong>
                         </div>
@@ -274,6 +301,14 @@ export default function AdminPage() {
                         <button
                             type="button"
                             role="tab"
+                            className={`tab-btn${activeTab === "address" ? " active" : ""}`}
+                            onClick={() => setActiveTab("address")}
+                        >
+                            📍 Confirma Endereço (<span>{addressRequests.length}</span>)
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
                             className={`tab-btn${activeTab === "all" ? " active" : ""}`}
                             onClick={() => setActiveTab("all")}
                         >
@@ -281,7 +316,7 @@ export default function AdminPage() {
                         </button>
                     </div>
 
-                    {activeTab === "pending" ? (
+                    {activeTab === "pending" && (
                         <section className="panel-section">
                             <div className="cards-grid">
                                 {pendingItems.length === 0 ? (
@@ -298,7 +333,7 @@ export default function AdminPage() {
                                             || item.paymentStatus === "PENDING_PAYMENT"
                                             || item.pendingRenewal;
                                         const approveLabel = (!item.approved || item.pendingRenewal || item.paymentStatus === "PAYMENT_SUBMITTED")
-                                            ? "✓ Aprovar e Liberar 30 dias"
+                                            ? "✓ Confirmar Pix e Liberar 30 dias"
                                             : "✓ Aprovar Edição";
 
                                         return (
@@ -318,11 +353,28 @@ export default function AdminPage() {
                                                     )}
                                                     <div className="store-meta">
                                                         <h3>{isEdit ? `${item.name} → ${data.name}` : data.name}</h3>
-                                                        <p><strong>Proprietário:</strong> {item.ownerEmail || "N/A"}</p>
-                                                        <p><strong>Categoria:</strong> {data.category} &bull; <strong>Tel:</strong> {data.phone}</p>
+                                                        <p>
+                                                            <strong>Proprietário:</strong>{" "}
+                                                            {data.ownerName || item.ownerName || "N/A"} ({item.ownerEmail || "N/A"})
+                                                        </p>
+                                                        <p>
+                                                            <strong>Categoria:</strong> {data.category} &bull;{" "}
+                                                            <strong>Tel:</strong> {data.phone}
+                                                        </p>
+                                                        {data.street && (
+                                                            <p>
+                                                                <strong>Endereço:</strong> {formatCompanyAddress(data)}
+                                                            </p>
+                                                        )}
                                                         <p>{data.description}</p>
                                                     </div>
                                                 </div>
+
+                                                {data.addressStatus === "PENDING_ADMIN_CONFIRMATION" && (
+                                                    <div className="address-alert-box">
+                                                        ⏳ CEP não localizado — confirmação manual pendente na aba &ldquo;Confirma Endereço&rdquo;.
+                                                    </div>
+                                                )}
 
                                                 {showPixBox && (
                                                     <div className="pix-proof-box">
@@ -354,7 +406,93 @@ export default function AdminPage() {
                                 )}
                             </div>
                         </section>
-                    ) : (
+                    )}
+
+                    {activeTab === "address" && (
+                        <section className="panel-section">
+                            <div className="cards-grid">
+                                {addressRequests.length === 0 ? (
+                                    <div className="empty-box">
+                                        Nenhuma solicitação de confirmação de endereço pendente no momento.
+                                    </div>
+                                ) : (
+                                    addressRequests.map((item) => {
+                                        const isPendingEditAddr = Boolean(
+                                            item.hasPendingUpdate
+                                            && item.pendingData
+                                            && item.pendingData.addressStatus === "PENDING_ADMIN_CONFIRMATION"
+                                        );
+                                        const addrSource = isPendingEditAddr ? item.pendingData : item;
+                                        const displayName = addrSource.name || item.name;
+                                        const categoryLabel = addrSource.subsegment
+                                            ? `${addrSource.category || "Outros"} (${addrSource.subsegment})`
+                                            : (addrSource.category || item.category || "Outros");
+
+                                        return (
+                                            <article key={item.id} className="store-card">
+                                                <div className="store-card-top">
+                                                    <span className="badge badge-renew">Solicitação de Endereço</span>
+                                                    <span className="badge">
+                                                        {item.approved ? "Loja Aprovada" : "Aguardando Aprovação"}
+                                                    </span>
+                                                </div>
+
+                                                <div className="store-body">
+                                                    {addrSource.logoUrl && (
+                                                        <img
+                                                            src={addrSource.logoUrl}
+                                                            alt={displayName}
+                                                            className="store-thumb"
+                                                        />
+                                                    )}
+                                                    <div className="store-meta">
+                                                        <h3>{displayName}</h3>
+                                                        <p>
+                                                            <strong>Proprietário:</strong>{" "}
+                                                            {addrSource.ownerName || item.ownerName || "N/A"} ({item.ownerEmail || "N/A"})
+                                                        </p>
+                                                        <p>
+                                                            <strong>Serviço:</strong> {categoryLabel} &bull;{" "}
+                                                            <strong>Tel:</strong> {addrSource.phone || item.phone}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="address-request-box">
+                                                    <p><strong>CEP informado:</strong> {addrSource.cep || "Não informado"}</p>
+                                                    <p><strong>Rua / Logradouro:</strong> {addrSource.street || "-"}, Nº {addrSource.addressNumber || "-"}</p>
+                                                    {addrSource.complement && (
+                                                        <p><strong>Complemento:</strong> {addrSource.complement}</p>
+                                                    )}
+                                                    <p><strong>Bairro:</strong> {addrSource.neighborhood || "-"}</p>
+                                                    <p><strong>Cidade / UF:</strong> {addrSource.city || "-"} / {addrSource.state || "-"}</p>
+                                                </div>
+
+                                                <div className="store-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="btn-primary"
+                                                        onClick={() => handleConfirmAddress(item, addrSource, displayName)}
+                                                    >
+                                                        ✓ Confirmar Endereço
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-danger"
+                                                        onClick={() => handleReject(item, displayName)}
+                                                    >
+                                                        ✕ Rejeitar
+                                                    </button>
+                                                </div>
+                                            </article>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </section>
+                    )}
+
+                    {activeTab === "all" && (
                         <section className="panel-section">
                             <div className="admin-service-groups">
                                 {allItems.length === 0 ? (
@@ -397,7 +535,9 @@ export default function AdminPage() {
                                                         const statusBadge = getAllStoreStatusBadge(item);
                                                         const expInfo = item.subscriptionExpiresAt
                                                             ? `${new Date(item.subscriptionExpiresAt).toLocaleDateString("pt-BR")} (${item.daysRemaining} dias)`
-                                                            : "Sem expiração (Seed/Adm)";
+                                                            : (item.paymentStatus === "EXEMPT"
+                                                                ? "Sem expiração (Adm)"
+                                                                : "Expirada / Sem Pix confirmado");
                                                         const categoryLabel = item.subsegment
                                                             ? `${item.category || "Outros"} (${item.subsegment})`
                                                             : item.category || "Outros";
@@ -419,8 +559,16 @@ export default function AdminPage() {
                                                                     )}
                                                                     <div className="store-meta">
                                                                         <h3>{item.name}</h3>
-                                                                        <p><strong>Dono:</strong> {item.ownerEmail || "Adm"}</p>
+                                                                        <p>
+                                                                            <strong>Proprietário:</strong>{" "}
+                                                                            {item.ownerName || item.ownerEmail || "Adm"}
+                                                                        </p>
                                                                         <p><strong>Serviço:</strong> {categoryLabel} &bull; {item.phone}</p>
+                                                                        {item.street && (
+                                                                            <p>
+                                                                                <strong>Endereço:</strong> {formatCompanyAddress(item)}
+                                                                            </p>
+                                                                        )}
                                                                         <p><strong>Validade:</strong> {expInfo}</p>
                                                                     </div>
                                                                 </div>

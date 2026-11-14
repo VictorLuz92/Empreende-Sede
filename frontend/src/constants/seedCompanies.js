@@ -84,22 +84,22 @@ const RAW_SEED_COMPANIES = [
     ["Sabor Leve Marmitas Fit", "Gastronomia", "Restaurante", SERVICE_PHOTOS.gas2, "Refeições congeladas balanceadas, combos semanais low carb e opções vegetarianas.", "(11) 96567-8908", "5511965678908", "saborleve.fit"],
     ["Fogão Mineiro Delivery", "Gastronomia", "Restaurante", SERVICE_PHOTOS.gas3, "Feijoada aos sábados, arroz carreteiro, carnes assadas e porções generosas para toda a família.", "(11) 96567-8909", "5511965678909", "fogaomineiro.sede"],
 
-    // Beleza (Masculina/Feminina) — Salão
-    ["Espaço Raiz Beleza & Barbearia", "Beleza (Masculina/Feminina)", "Salão", SERVICE_PHOTOS.bel1, "Cortes masculinos e femininos, barba, coloração, escova e estética facial com horário agendado.", "(11) 99887-7665", "5511998877665", "espacoraiz.beleza"],
-    ["Salão Essencial Cabelos", "Beleza (Masculina/Feminina)", "Salão", SERVICE_PHOTOS.bel3, "Hidratação profunda, progressiva sem formol, mechas iluminadas e cortes modernos.", "(11) 99887-7666", "5511998877666", "salaoessencial.sede"],
-    ["Studio Vibe Capilar", "Beleza (Masculina/Feminina)", "Salão", SERVICE_PHOTOS.bel2, "Penteados para festas, tratamentos para cachos, reconstrução capilar e atendimento familiar.", "(11) 99887-7667", "5511998877667", "studiovibecapilar"],
-    // Beleza (Masculina/Feminina) — Barbearia
-    ["Barbearia Dom Pedro", "Beleza (Masculina/Feminina)", "Barbearia", SERVICE_PHOTOS.bel2, "Corte masculino clássico e degradê, barboterapia com toalha quente e cuidados completos para o visual masculino.", "(11) 95567-8905", "5511955678905", "barbeariadompedro"],
-    ["Navalha Fina Barber", "Beleza (Masculina/Feminina)", "Barbearia", SERVICE_PHOTOS.bel1, "Degradê na navalha, alinhamento de barba, pigmentação leve e planos mensais de corte.", "(11) 95567-8906", "5511955678906", "navalhafinabarber"],
-    ["Clube do Corte Masculino", "Beleza (Masculina/Feminina)", "Barbearia", SERVICE_PHOTOS.bel3, "Ambiente descontraído, corte infantil e adulto, barba modelada e sobrancelha masculina.", "(11) 95567-8907", "5511955678907", "clubedocortesede"],
-    // Beleza (Masculina/Feminina) — Manicure
-    ["Studio Bela Essência", "Beleza (Masculina/Feminina)", "Manicure", SERVICE_PHOTOS.bel3, "Manicure, pedicure, design de sobrancelhas, alongamento de cílios e maquiagem social em ambiente climatizado.", "(11) 94678-9006", "5511946789006", "studiobelaessencia"],
-    ["Esmalteria Mãos de Seda", "Beleza (Masculina/Feminina)", "Manicure", SERVICE_PHOTOS.bel1, "Esmaltação em gel, blindagem, spa dos pés e cutilagem cuidadosa com materiais esterilizados.", "(11) 94678-9007", "5511946789007", "esmalteriamaosdeseda"],
-    ["Olhar Perfeito Sobrancelhas", "Beleza (Masculina/Feminina)", "Manicure", SERVICE_PHOTOS.bel2, "Design personalizado com henna, brow lamination, lash lifting e micropigmentação.", "(11) 94678-9008", "5511946789008", "olharperfeito.sede"],
-    // Beleza (Masculina/Feminina) — Estética
-    ["Clínica Bem-Estar Estética", "Beleza (Masculina/Feminina)", "Estética", SERVICE_PHOTOS.bel1, "Limpeza de pele profunda, drenagem linfática, massagem relaxante e cuidados faciais.", "(11) 94789-0109", "5511947890109", "clinicabemestar.sede"],
-    ["Toque Sereno Massoterapia", "Beleza (Masculina/Feminina)", "Estética", SERVICE_PHOTOS.bel3, "Massagem modeladora, ventosaterapia, liberação miofascial e relaxamento antiestresse.", "(11) 94789-0110", "5511947890110", "toquesereno.massa"],
-    ["Pele Viva Dermocosméticos", "Beleza (Masculina/Feminina)", "Estética", SERVICE_PHOTOS.bel2, "Peeling suave, hidratação facial revitalizante e protocolos personalizados de autocuidado.", "(11) 94789-0111", "5511947890111", "peleviva.sede"],
+    // Beleza — Salão
+    ["Espaço Raiz Beleza & Barbearia", "Beleza", "Salão", SERVICE_PHOTOS.bel1, "Cortes masculinos e femininos, barba, coloração, escova e estética facial com horário agendado.", "(11) 99887-7665", "5511998877665", "espacoraiz.beleza"],
+    ["Salão Essencial Cabelos", "Beleza", "Salão", SERVICE_PHOTOS.bel3, "Hidratação profunda, progressiva sem formol, mechas iluminadas e cortes modernos.", "(11) 99887-7666", "5511998877666", "salaoessencial.sede"],
+    ["Studio Vibe Capilar", "Beleza", "Salão", SERVICE_PHOTOS.bel2, "Penteados para festas, tratamentos para cachos, reconstrução capilar e atendimento familiar.", "(11) 99887-7667", "5511998877667", "studiovibecapilar"],
+    // Beleza — Barbearia
+    ["Barbearia Dom Pedro", "Beleza", "Barbearia", SERVICE_PHOTOS.bel2, "Corte masculino clássico e degradê, barboterapia com toalha quente e cuidados completos para o visual masculino.", "(11) 95567-8905", "5511955678905", "barbeariadompedro"],
+    ["Navalha Fina Barber", "Beleza", "Barbearia", SERVICE_PHOTOS.bel1, "Degradê na navalha, alinhamento de barba, pigmentação leve e planos mensais de corte.", "(11) 95567-8906", "5511955678906", "navalhafinabarber"],
+    ["Clube do Corte Masculino", "Beleza", "Barbearia", SERVICE_PHOTOS.bel3, "Ambiente descontraído, corte infantil e adulto, barba modelada e sobrancelha masculina.", "(11) 95567-8907", "5511955678907", "clubedocortesede"],
+    // Beleza — Manicure
+    ["Studio Bela Essência", "Beleza", "Manicure", SERVICE_PHOTOS.bel3, "Manicure, pedicure, design de sobrancelhas, alongamento de cílios e maquiagem social em ambiente climatizado.", "(11) 94678-9006", "5511946789006", "studiobelaessencia"],
+    ["Esmalteria Mãos de Seda", "Beleza", "Manicure", SERVICE_PHOTOS.bel1, "Esmaltação em gel, blindagem, spa dos pés e cutilagem cuidadosa com materiais esterilizados.", "(11) 94678-9007", "5511946789007", "esmalteriamaosdeseda"],
+    ["Olhar Perfeito Sobrancelhas", "Beleza", "Manicure", SERVICE_PHOTOS.bel2, "Design personalizado com henna, brow lamination, lash lifting e micropigmentação.", "(11) 94678-9008", "5511946789008", "olharperfeito.sede"],
+    // Beleza — Estética
+    ["Clínica Bem-Estar Estética", "Beleza", "Estética", SERVICE_PHOTOS.bel1, "Limpeza de pele profunda, drenagem linfática, massagem relaxante e cuidados faciais.", "(11) 94789-0109", "5511947890109", "clinicabemestar.sede"],
+    ["Toque Sereno Massoterapia", "Beleza", "Estética", SERVICE_PHOTOS.bel3, "Massagem modeladora, ventosaterapia, liberação miofascial e relaxamento antiestresse.", "(11) 94789-0110", "5511947890110", "toquesereno.massa"],
+    ["Pele Viva Dermocosméticos", "Beleza", "Estética", SERVICE_PHOTOS.bel2, "Peeling suave, hidratação facial revitalizante e protocolos personalizados de autocuidado.", "(11) 94789-0111", "5511947890111", "peleviva.sede"],
 
     // Vestuário — Moda
     ["Ateliê & Moda Local", "Vestuário", "Moda", SERVICE_PHOTOS.ves1, "Roupas casuais masculinas e femininas, confecção própria, ajustes sob medida e peças exclusivas.", "(11) 96543-2109", "5511965432109", "ateliemodalocal"],
@@ -127,6 +127,16 @@ export const SEED_COMPANIES = RAW_SEED_COMPANIES.map(
         subsegment,
         logoUrl,
         description,
+        ownerName: "Empreendedor Local",
+        cep: "01310-100",
+        street: "Av. Paulista",
+        addressNumber: String(100 + index),
+        complement: "",
+        neighborhood: "Bela Vista",
+        city: "São Paulo",
+        state: "SP",
+        addressStatus: "CONFIRMED_BY_CEP",
+        addressConfirmed: true,
         phone,
         whatsapp,
         instagram,

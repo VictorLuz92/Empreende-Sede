@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { MAX_AVATAR_SIZE_KB } from "../constants/services";
 import { AuthApi } from "../services/api";
-import { formatPaymentBadge, getInitials, validateAndReadImageFile } from "../utils/formatters";
+import {
+    formatCompanyAddress,
+    formatPaymentBadge,
+    getInitials,
+    validateAndReadImageFile
+} from "../utils/formatters";
 import { ImageUploadErrorBox, ImageUploadGuidelines } from "./ImageUploadGuidelines";
 
 export default function ProfileModal({
@@ -103,6 +108,19 @@ export default function ProfileModal({
                     <div className="profile-info-text">
                         <p className="profile-name">{user.name}</p>
                         <p className="profile-email">{user.email}</p>
+                        <p className="profile-account-status">
+                            {user.expired === false && user.subscriptionExpiresAt ? (
+                                <span className="status-pill status-ok">
+                                    ✓ Conta ativa • validade até{" "}
+                                    {new Date(user.subscriptionExpiresAt).toLocaleDateString("pt-BR")} (
+                                    {user.daysRemaining} dias)
+                                </span>
+                            ) : (
+                                <span className="status-pill status-danger">
+                                    ⚠️ Conta expirada • Confirmação do Pix + 30 dias pelo Adm necessária para exibir lojas no site
+                                </span>
+                            )}
+                        </p>
                         <p className="profile-role-hint">
                             Todas as criações e edições de loja passam pela aprovação do Administrador.
                         </p>
@@ -183,6 +201,17 @@ export default function ProfileModal({
                                             )}
                                             <div className="pending-item-details">
                                                 <p>{store.category} &bull; {store.phone}</p>
+                                                {store.ownerName && (
+                                                    <p><strong>Proprietário:</strong> {store.ownerName}</p>
+                                                )}
+                                                {store.street && (
+                                                    <p>
+                                                        <strong>Endereço:</strong> {formatCompanyAddress(store)}{" "}
+                                                        ({store.addressStatus === "PENDING_ADMIN_CONFIRMATION"
+                                                            ? "⏳ Aguardando confirmação do Adm"
+                                                            : "✓ Confirmado"})
+                                                    </p>
+                                                )}
                                                 {store.subscriptionExpiresAt && (
                                                     <p>
                                                         Divulgação válida até:{" "}

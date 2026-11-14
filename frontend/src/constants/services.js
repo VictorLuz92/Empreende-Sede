@@ -5,7 +5,7 @@ export const OFFICIAL_SERVICE_CATEGORIES = [
     "Mão de Obra",
     "Comércio",
     "Gastronomia",
-    "Beleza (Masculina/Feminina)",
+    "Beleza",
     "Vestuário"
 ];
 
@@ -29,7 +29,7 @@ export const OFFICIAL_SERVICE_SUBSEGMENTS = {
         "Doceria",
         "Restaurante"
     ],
-    "Beleza (Masculina/Feminina)": [
+    "Beleza": [
         "Salão",
         "Barbearia",
         "Manicure",

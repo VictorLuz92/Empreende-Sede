@@ -81,3 +81,21 @@ export function validateAndReadImageFile(file, maxKB) {
         reader.readAsDataURL(file);
     });
 }
+
+export function formatCepMask(raw) {
+    const digits = (raw || "").replace(/\D/g, "").slice(0, 8);
+    if (digits.length > 5) {
+        return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+    }
+    return digits;
+}
+
+export function formatCompanyAddress(company) {
+    if (!company || !company.street) return "Endereço não informado";
+    const line1Parts = [company.street, company.addressNumber].filter(Boolean).join(", ");
+    const comp = company.complement ? ` (${company.complement})` : "";
+    const neighborhood = company.neighborhood ? ` - ${company.neighborhood}` : "";
+    const cityState = [company.city, company.state].filter(Boolean).join("/");
+    const cepPart = company.cep ? ` • CEP ${company.cep}` : "";
+    return `${line1Parts}${comp}${neighborhood}${cityState ? `, ${cityState}` : ""}${cepPart}`;
+}

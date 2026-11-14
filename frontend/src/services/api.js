@@ -11,7 +11,7 @@ const USER_TOKEN_KEY = "empreende_sede_user_token";
 const USER_INFO_KEY = "empreende_sede_user_info";
 const ADMIN_TOKEN_KEY = "empreende_sede_admin_token";
 const ADMIN_EMAIL_KEY = "empreende_sede_admin_email";
-const STORAGE_KEY = "empreende_sede_demo_companies_v7";
+const STORAGE_KEY = "empreende_sede_demo_companies_v8";
 
 function loadDemoCompanies() {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -48,6 +48,16 @@ function mapSupabaseCompanyRow(row) {
         subsegment: row.subsegment,
         logoUrl: row.logo_url,
         description: row.description,
+        ownerName: row.owner_name,
+        cep: row.cep,
+        street: row.street,
+        addressNumber: row.address_number,
+        complement: row.complement,
+        neighborhood: row.neighborhood,
+        city: row.city,
+        state: row.state,
+        addressStatus: row.address_status,
+        addressConfirmed: row.address_confirmed,
         phone: row.phone,
         whatsapp: row.whatsapp,
         instagram: row.instagram,
@@ -58,6 +68,13 @@ function mapSupabaseCompanyRow(row) {
     };
 }
 
+function isCompanyPublished(company) {
+    if (!company || company.approved === false) return false;
+    if (String(company.paymentStatus || "").toUpperCase() === "EXEMPT") return true;
+    if (!company.subscriptionExpiresAt) return false;
+    return new Date(company.subscriptionExpiresAt) > new Date();
+}
+
 function filterDemoCompanies(list, query = "", category = "", subsegment = "") {
     const q = query.trim().toLowerCase();
     const cat = category.trim().toLowerCase();
@@ -65,13 +82,15 @@ function filterDemoCompanies(list, query = "", category = "", subsegment = "") {
 
     return list
         .filter((c) => {
+            if (!isCompanyPublished(c)) return false;
             const matchCat = !cat || (c.category || "").toLowerCase() === cat;
             const matchSub = !sub || (c.subsegment || "").toLowerCase() === sub;
             const matchQ = !q
                 || (c.name || "").toLowerCase().includes(q)
                 || (c.description || "").toLowerCase().includes(q)
                 || (c.category || "").toLowerCase().includes(q)
-                || (c.subsegment || "").toLowerCase().includes(q);
+                || (c.subsegment || "").toLowerCase().includes(q)
+                || (c.ownerName || "").toLowerCase().includes(q);
             return matchCat && matchSub && matchQ;
         })
         .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
@@ -288,6 +307,47 @@ export const CompanyApi = {
         });
         if (!response.ok) throw new Error(await parseError(response, "Falha ao enviar comprovante Pix."));
         return await response.json();
+    },
+
+    async lookupCep(rawCep) {
+        const digits = (rawCep || "").replace(/\D/g, "");
+        if (digits.length !== 8) {
+            throw new Error("Informe um CEP válido com 8 dígitos.");
+        }
+        try {
+            const response = await fetch(`${API_ORIGIN}/api/cep/${digits}`);
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch {
+            // fallback directly to ViaCEP if backend proxy is unavailable
+        }
+        try {
+            const viaCepResp = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+            if (viaCepResp.ok) {
+                const data = await viaCepResp.json();
+                if (!data.erro && data.localidade && data.uf) {
+                    return {
+                        found: true,
+                        cep: `${digits.slice(0, 5)}-${digits.slice(5)}`,
+                        street: (data.logradouro || "").trim(),
+                        neighborhood: (data.bairro || "").trim(),
+                        city: (data.localidade || "").trim(),
+                        state: (data.uf || "").trim().toUpperCase()
+                    };
+                }
+            }
+        } catch {
+            // handled as not found below
+        }
+        return {
+            found: false,
+            cep: `${digits.slice(0, 5)}-${digits.slice(5)}`,
+            street: "",
+            neighborhood: "",
+            city: "",
+            state: ""
+        };
     }
 };
 
@@ -347,12 +407,20 @@ export const AdminApi = {
         return this.request("/pending");
     },
 
+    getAddressRequests() {
+        return this.request("/address-requests");
+    },
+
     getAllCompanies() {
         return this.request("/companies");
     },
 
     approveCompany(id) {
         return this.request(`/companies/${id}/approve`, { method: "POST" });
+    },
+
+    confirmAddress(id) {
+        return this.request(`/companies/${id}/confirm-address`, { method: "POST" });
     },
 
     rejectCompany(id) {

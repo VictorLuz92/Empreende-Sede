@@ -1887,3 +1887,100 @@ body {
         gap: 24px 56px;
     }
 }
+
+/* Proprietário e Endereço com CEP */
+.company-extra-details {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.company-detail-line {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+.address-mini-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #dcfce7;
+    color: #166534;
+    margin-left: 4px;
+}
+
+.address-mini-badge.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.profile-account-status {
+    margin-top: 4px;
+}
+
+.cep-address-box {
+    border: 1px solid var(--border-color);
+    background: var(--bg-subtle);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cep-search-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cep-input-label {
+    flex: 1 1 180px;
+}
+
+.cep-search-btn {
+    height: 40px;
+    white-space: nowrap;
+}
+
+.cep-manual-toggle {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.cep-manual-toggle input[type="checkbox"] {
+    width: auto;
+    accent-color: var(--accent);
+}
+
+.address-status-banner {
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.address-status-banner.address-ok {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.address-status-banner.address-pending {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
