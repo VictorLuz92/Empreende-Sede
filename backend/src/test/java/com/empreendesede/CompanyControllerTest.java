@@ -131,6 +131,34 @@ class CompanyControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(companyId)));
 
+        // Pix proof requires payerNote; txId is optional
+        String pixPayloadMissingName = """
+                {
+                  "txId": "E2E123",
+                  "payerNote": "",
+                  "renewal": false
+                }
+                """;
+        mockMvc.perform(post("/api/companies/" + companyId + "/pix-proof")
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pixPayloadMissingName))
+                .andExpect(status().isBadRequest());
+
+        String pixPayloadOnlyName = """
+                {
+                  "txId": "",
+                  "payerNote": "Maria Proprietária",
+                  "renewal": false
+                }
+                """;
+        mockMvc.perform(post("/api/companies/" + companyId + "/pix-proof")
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pixPayloadOnlyName))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pixPayerNote", is("Maria Proprietária")));
+
         // Admin confirms address
         mockMvc.perform(post("/api/admin/companies/" + companyId + "/confirm-address")
                         .header("Authorization", "Bearer " + adminToken))

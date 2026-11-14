@@ -281,7 +281,7 @@ export default function CompanyFormModal({
                             <select value={subsegment} onChange={(e) => setSubsegment(e.target.value)}>
                                 <option value="">
                                     {availableSubsegments.length > 0
-                                        ? "Selecione o subsegmento (opcional)..."
+                                        ? "Sem subsegmento (Adm define na aba Confirma Subclasse)"
                                         : "Selecione primeiro o tipo de serviço..."}
                                 </option>
                                 {availableSubsegments.map((sub) => (

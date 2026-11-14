@@ -411,6 +411,10 @@ export const AdminApi = {
         return this.request("/address-requests");
     },
 
+    getSubsegmentRequests() {
+        return this.request("/subsegment-requests");
+    },
+
     getAllCompanies() {
         return this.request("/companies");
     },
@@ -421,6 +425,14 @@ export const AdminApi = {
 
     confirmAddress(id) {
         return this.request(`/companies/${id}/confirm-address`, { method: "POST" });
+    },
+
+    assignSubsegment(id, subsegment) {
+        return this.request(`/companies/${id}/subsegment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ subsegment })
+        });
     },
 
     rejectCompany(id) {

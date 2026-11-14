@@ -77,4 +77,21 @@ public interface CompanyRepository extends JpaRepository<Company, UUID> {
             ORDER BY c.updatedAt DESC
             """)
     List<Company> findPendingAddressConfirmations();
+
+    @Query("""
+            SELECT c FROM Company c
+            WHERE c.active = true
+              AND ((c.subsegment IS NULL OR TRIM(c.subsegment) = '')
+                   OR (c.hasPendingUpdate = true AND (c.pendingSubsegment IS NULL OR TRIM(c.pendingSubsegment) = '')))
+            ORDER BY c.updatedAt DESC
+            """)
+    List<Company> findPendingSubsegments();
+
+    @Query("""
+            SELECT DISTINCT c.category, c.subsegment FROM Company c
+            WHERE c.active = true
+              AND c.subsegment IS NOT NULL
+              AND TRIM(c.subsegment) <> ''
+            """)
+    List<Object[]> findDistinctActiveCategorySubsegments();
 }

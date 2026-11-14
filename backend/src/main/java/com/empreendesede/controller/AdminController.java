@@ -54,12 +54,22 @@ public class AdminController {
         return companyService.listPendingApprovals();
     }
 
+    public record AssignSubsegmentRequest(String subsegment) {}
+
     @GetMapping("/address-requests")
     public List<CompanyResponse> listAddressRequests(
             @RequestHeader(name = "Authorization", required = false) String authHeader
     ) {
         tokenService.requireAdmin(authHeader);
         return companyService.listPendingAddressConfirmations();
+    }
+
+    @GetMapping("/subsegment-requests")
+    public List<CompanyResponse> listSubsegmentRequests(
+            @RequestHeader(name = "Authorization", required = false) String authHeader
+    ) {
+        tokenService.requireAdmin(authHeader);
+        return companyService.listPendingSubsegments();
     }
 
     @GetMapping("/companies")
@@ -105,6 +115,16 @@ public class AdminController {
     ) {
         tokenService.requireAdmin(authHeader);
         return companyService.confirmAddressByAdmin(id);
+    }
+
+    @PostMapping("/companies/{id}/subsegment")
+    public CompanyResponse assignSubsegment(
+            @PathVariable("id") UUID id,
+            @RequestBody AssignSubsegmentRequest request,
+            @RequestHeader(name = "Authorization", required = false) String authHeader
+    ) {
+        tokenService.requireAdmin(authHeader);
+        return companyService.assignSubsegmentByAdmin(id, request != null ? request.subsegment() : null);
     }
 
     @PostMapping("/companies/{id}/reject")

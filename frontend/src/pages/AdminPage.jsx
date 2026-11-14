@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { OFFICIAL_SERVICE_CATEGORIES } from "../constants/services";
-import { AdminApi } from "../services/api";
+import { OFFICIAL_SERVICE_CATEGORIES, OFFICIAL_SERVICE_SUBSEGMENTS } from "../constants/services";
+import { AdminApi, CompanyApi } from "../services/api";
 import { formatCompanyAddress } from "../utils/formatters";
 import "../styles/admin.css";
 
@@ -39,6 +39,112 @@ function groupStoresByService(items) {
     return Array.from(groupedMap.entries()).filter(([, groupItems]) => groupItems.length > 0);
 }
 
+function SubsegmentAssignCard({ item, subsegmentsMap, onSaveSubsegment, onReject }) {
+    const isPendingEditSub = Boolean(
+        item.hasPendingUpdate
+        && item.pendingData
+        && (!item.pendingData.subsegment || !item.pendingData.subsegment.trim())
+    );
+    const source = isPendingEditSub ? item.pendingData : item;
+    const displayName = source.name || item.name;
+    const category = source.category || item.category || "Geral";
+    const options = subsegmentsMap[category] || OFFICIAL_SERVICE_SUBSEGMENTS[category] || [];
+
+    const [selectedOption, setSelectedOption] = useState(options[0] || "__NEW__");
+    const [customSubsegment, setCustomSubsegment] = useState("");
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        if (selectedOption !== "__NEW__" && !options.includes(selectedOption)) {
+            setSelectedOption(options[0] || "__NEW__");
+        }
+    }, [options, selectedOption]);
+
+    async function handleSave(e) {
+        e.preventDefault();
+        const chosen = selectedOption === "__NEW__"
+            ? customSubsegment.trim()
+            : selectedOption.trim();
+        if (!chosen) return;
+        setSaving(true);
+        try {
+            await onSaveSubsegment(item, displayName, chosen);
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    return (
+        <article className="store-card">
+            <div className="store-card-top">
+                <span className="badge badge-edit">Sem Subsessão</span>
+                <span className="badge">{category}</span>
+            </div>
+
+            <div className="store-body">
+                {source.logoUrl && (
+                    <img
+                        src={source.logoUrl}
+                        alt={displayName}
+                        className="store-thumb"
+                    />
+                )}
+                <div className="store-meta">
+                    <h3>{displayName}</h3>
+                    <p>
+                        <strong>Proprietário:</strong>{" "}
+                        {source.ownerName || item.ownerName || "N/A"} ({item.ownerEmail || "N/A"})
+                    </p>
+                    <p><strong>Tel:</strong> {source.phone || item.phone}</p>
+                    <p>{source.description || item.description}</p>
+                </div>
+            </div>
+
+            <form className="subsegment-assign-box" onSubmit={handleSave}>
+                <label>
+                    Escolher subsessão existente ou criar uma nova para {category}
+                    <select
+                        value={selectedOption}
+                        onChange={(e) => setSelectedOption(e.target.value)}
+                    >
+                        {options.map((sub) => (
+                            <option key={sub} value={sub}>{sub}</option>
+                        ))}
+                        <option value="__NEW__">+ Criar nova subsessão...</option>
+                    </select>
+                </label>
+
+                {selectedOption === "__NEW__" && (
+                    <label>
+                        Nome da nova subsessão / subclasse *
+                        <input
+                            type="text"
+                            required
+                            maxLength={80}
+                            value={customSubsegment}
+                            onChange={(e) => setCustomSubsegment(e.target.value)}
+                            placeholder={`Ex: Nova subsessão em ${category}`}
+                        />
+                    </label>
+                )}
+
+                <div className="store-actions">
+                    <button type="submit" className="btn-primary" disabled={saving}>
+                        {saving ? "Salvando..." : "✓ Confirmar Subclasse"}
+                    </button>
+                    <button
+                        type="button"
+                        className="btn-danger"
+                        onClick={() => onReject(item, displayName)}
+                    >
+                        ✕ Rejeitar
+                    </button>
+                </div>
+            </form>
+        </article>
+    );
+}
+
 export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(AdminApi.getToken()));
     const [adminIdentity, setAdminIdentity] = useState(() => AdminApi.getEmail());
@@ -50,6 +156,8 @@ export default function AdminPage() {
     const [activeTab, setActiveTab] = useState("pending");
     const [pendingItems, setPendingItems] = useState([]);
     const [addressRequests, setAddressRequests] = useState([]);
+    const [subsegmentRequests, setSubsegmentRequests] = useState([]);
+    const [subsegmentsMap, setSubsegmentsMap] = useState({ ...OFFICIAL_SERVICE_SUBSEGMENTS });
     const [allItems, setAllItems] = useState([]);
 
     const [toastMsg, setToastMsg] = useState("");
@@ -71,18 +179,25 @@ export default function AdminPage() {
         setIsAuthenticated(false);
         setPendingItems([]);
         setAddressRequests([]);
+        setSubsegmentRequests([]);
         setAllItems([]);
     }, []);
 
     const loadAdminData = useCallback(async () => {
         try {
-            const [pending, addresses, all] = await Promise.all([
+            const [pending, addresses, subsegmentsPending, subsMap, all] = await Promise.all([
                 AdminApi.getPending(),
                 AdminApi.getAddressRequests(),
+                AdminApi.getSubsegmentRequests(),
+                CompanyApi.listSubsegments(),
                 AdminApi.getAllCompanies()
             ]);
             setPendingItems(pending);
             setAddressRequests(addresses);
+            setSubsegmentRequests(subsegmentsPending);
+            if (subsMap && Object.keys(subsMap).length > 0) {
+                setSubsegmentsMap(subsMap);
+            }
             setAllItems(all);
         } catch (err) {
             if (err.isAuthError) {
@@ -135,6 +250,16 @@ export default function AdminPage() {
         try {
             await AdminApi.confirmAddress(item.id);
             showToast(`Endereço de "${displayName}" confirmado com sucesso!`);
+            await loadAdminData();
+        } catch (err) {
+            showToast(err.message);
+        }
+    }
+
+    async function handleAssignSubsegment(item, displayName, chosenSubsegment) {
+        try {
+            await AdminApi.assignSubsegment(item.id, chosenSubsegment);
+            showToast(`Subclasse "${chosenSubsegment}" definida para "${displayName}"!`);
             await loadAdminData();
         } catch (err) {
             showToast(err.message);
@@ -204,7 +329,7 @@ export default function AdminPage() {
                         <div className="login-badge">Acesso Restrito</div>
                         <h1>Painel do Administrador</h1>
                         <p className="login-subtitle">
-                            Apenas o administrador único do Empreende Sede pode aprovar lojas, validar pagamentos Pix (R$ 50,00/mês), confirmar endereços e publicar alterações.
+                            Apenas o administrador único do Empreende Sede pode aprovar lojas, validar pagamentos Pix (R$ 50,00/mês), confirmar endereços, organizar subclasses e publicar alterações.
                         </p>
 
                         {loginError && (
@@ -280,6 +405,10 @@ export default function AdminPage() {
                             <strong className="stat-value">{addressRequests.length}</strong>
                         </div>
                         <div className="stat-card">
+                            <span className="stat-label">Confirmações de Subclasse</span>
+                            <strong className="stat-value">{subsegmentRequests.length}</strong>
+                        </div>
+                        <div className="stat-card">
                             <span className="stat-label">Lojas Ativas na Vitrine</span>
                             <strong className="stat-value">{publishedCount}</strong>
                         </div>
@@ -305,6 +434,14 @@ export default function AdminPage() {
                             onClick={() => setActiveTab("address")}
                         >
                             📍 Confirma Endereço (<span>{addressRequests.length}</span>)
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            className={`tab-btn${activeTab === "subsegment" ? " active" : ""}`}
+                            onClick={() => setActiveTab("subsegment")}
+                        >
+                            🏷️ Confirma Subclasse (<span>{subsegmentRequests.length}</span>)
                         </button>
                         <button
                             type="button"
@@ -358,8 +495,9 @@ export default function AdminPage() {
                                                             {data.ownerName || item.ownerName || "N/A"} ({item.ownerEmail || "N/A"})
                                                         </p>
                                                         <p>
-                                                            <strong>Categoria:</strong> {data.category} &bull;{" "}
-                                                            <strong>Tel:</strong> {data.phone}
+                                                            <strong>Categoria:</strong> {data.category}
+                                                            {data.subsegment ? ` • ${data.subsegment}` : " • Sem subsessão"}
+                                                            {" "} &bull; <strong>Tel:</strong> {data.phone}
                                                         </p>
                                                         {data.street && (
                                                             <p>
@@ -379,8 +517,8 @@ export default function AdminPage() {
                                                 {showPixBox && (
                                                     <div className="pix-proof-box">
                                                         <p><strong>Status Pix:</strong> {item.paymentStatus}</p>
-                                                        <p><strong>Código / Comprovante:</strong> {item.pixTxId || "Ainda não informado pelo usuário"}</p>
-                                                        <p><strong>Observação:</strong> {item.pixPayerNote || "-"}</p>
+                                                        <p><strong>Quem enviou o Pix:</strong> {item.pixPayerNote || "Ainda não informado"}</p>
+                                                        <p><strong>Comprovante / Código Pix:</strong> {item.pixTxId || "Não informado (opcional)"}</p>
                                                     </div>
                                                 )}
 
@@ -492,6 +630,28 @@ export default function AdminPage() {
                         </section>
                     )}
 
+                    {activeTab === "subsegment" && (
+                        <section className="panel-section">
+                            <div className="cards-grid">
+                                {subsegmentRequests.length === 0 ? (
+                                    <div className="empty-box">
+                                        Todas as lojas já possuem uma subsessão (subclasse) definida.
+                                    </div>
+                                ) : (
+                                    subsegmentRequests.map((item) => (
+                                        <SubsegmentAssignCard
+                                            key={item.id}
+                                            item={item}
+                                            subsegmentsMap={subsegmentsMap}
+                                            onSaveSubsegment={handleAssignSubsegment}
+                                            onReject={handleReject}
+                                        />
+                                    ))
+                                )}
+                            </div>
+                        </section>
+                    )}
+
                     {activeTab === "all" && (
                         <section className="panel-section">
                             <div className="admin-service-groups">
@@ -540,7 +700,7 @@ export default function AdminPage() {
                                                                 : "Expirada / Sem Pix confirmado");
                                                         const categoryLabel = item.subsegment
                                                             ? `${item.category || "Outros"} (${item.subsegment})`
-                                                            : item.category || "Outros";
+                                                            : `${item.category || "Outros"} (Sem subsessão)`;
 
                                                         return (
                                                             <article key={item.id} className="store-card">

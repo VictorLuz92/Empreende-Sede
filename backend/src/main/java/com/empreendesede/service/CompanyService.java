@@ -17,8 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -106,6 +108,13 @@ public class CompanyService {
     }
 
     @Transactional(readOnly = true)
+    public List<CompanyResponse> listPendingSubsegments() {
+        return companyRepository.findPendingSubsegments().stream()
+                .map(CompanyResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<CompanyResponse> listAllForAdmin() {
         return companyRepository.findByActiveTrueOrderByUpdatedAtDesc().stream()
                 .map(CompanyResponse::fromEntity)
@@ -132,7 +141,20 @@ public class CompanyService {
 
     @Transactional(readOnly = true)
     public Map<String, List<String>> listSubsegments() {
-        return SUBSEGMENTS_BY_CATEGORY;
+        Map<String, Set<String>> merged = new LinkedHashMap<>();
+        SUBSEGMENTS_BY_CATEGORY.forEach((cat, subs) -> merged.put(cat, new LinkedHashSet<>(subs)));
+
+        for (Object[] row : companyRepository.findDistinctActiveCategorySubsegments()) {
+            String cat = row[0] != null ? row[0].toString().trim() : "";
+            String sub = row[1] != null ? row[1].toString().trim() : "";
+            if (!cat.isEmpty() && !sub.isEmpty()) {
+                merged.computeIfAbsent(cat, k -> new LinkedHashSet<>()).add(sub);
+            }
+        }
+
+        Map<String, List<String>> result = new LinkedHashMap<>();
+        merged.forEach((cat, set) -> result.put(cat, List.copyOf(set)));
+        return result;
     }
 
     @Transactional
@@ -219,8 +241,8 @@ public class CompanyService {
             throw new ApiException(HttpStatus.FORBIDDEN, "Você só pode enviar o comprovante da sua própria loja.");
         }
 
-        company.setPixTxId(request.txId().trim());
-        company.setPixPayerNote(trimOrNull(request.payerNote()));
+        company.setPixTxId(trimOrNull(request.txId()));
+        company.setPixPayerNote(request.payerNote().trim());
         company.setPaymentStatus("PAYMENT_SUBMITTED");
         if (request.renewal() || company.isApproved()) {
             company.setPendingRenewal(true);
@@ -306,6 +328,26 @@ public class CompanyService {
         }
         company.setAddressStatus(ADDRESS_CONFIRMED_BY_ADMIN);
         company.setAddressConfirmed(true);
+        return CompanyResponse.fromEntity(companyRepository.save(company));
+    }
+
+    @Transactional
+    public CompanyResponse assignSubsegmentByAdmin(UUID id, String rawSubsegment) {
+        Company company = findActiveOrThrow(id);
+        String normalized = trimOrNull(rawSubsegment);
+        if (normalized == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Informe ou crie uma subsessão (subclasse).");
+        }
+        if (normalized.length() > 80) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "A subsessão deve ter no máximo 80 caracteres.");
+        }
+
+        if (company.isHasPendingUpdate() && trimOrNull(company.getPendingSubsegment()) == null) {
+            company.setPendingSubsegment(normalized);
+        }
+        if (trimOrNull(company.getSubsegment()) == null || !company.isHasPendingUpdate()) {
+            company.setSubsegment(normalized);
+        }
         return CompanyResponse.fromEntity(companyRepository.save(company));
     }
 

@@ -48,15 +48,19 @@ export default function PixModal({
 
     async function handleSubmitProof(e) {
         e.preventDefault();
+        if (!payerNote.trim()) {
+            showToast("Informe o nome do usuário que enviou o Pix.");
+            return;
+        }
         try {
             await CompanyApi.submitPixProof(store.id, {
-                txId: txId.trim(),
+                txId: txId.trim() || null,
                 payerNote: payerNote.trim(),
                 renewal: Boolean(isRenewal)
             });
             await onProofSubmitted();
         } catch (err) {
-            showToast(err.message || "Erro ao enviar comprovante Pix.");
+            showToast(err.message || "Erro ao enviar solicitação Pix.");
         }
     }
 
@@ -115,25 +119,25 @@ export default function PixModal({
 
                 <form className="company-form" onSubmit={handleSubmitProof}>
                     <label>
-                        ID / Código da transação Pix ou E2E *
+                        Nome do usuário que enviou o Pix *
                         <input
                             type="text"
                             required
-                            maxLength={120}
-                            value={txId}
-                            onChange={(e) => setTxId(e.target.value)}
-                            placeholder="Ex: E1234567820261114... ou Comprovante #001"
+                            maxLength={255}
+                            value={payerNote}
+                            onChange={(e) => setPayerNote(e.target.value)}
+                            placeholder="Ex: Maria Silva"
                         />
                     </label>
 
                     <label>
-                        Nome do pagador / Observação (opcional)
+                        Comprovante / Código da transação Pix ou E2E (opcional)
                         <input
                             type="text"
-                            maxLength={255}
-                            value={payerNote}
-                            onChange={(e) => setPayerNote(e.target.value)}
-                            placeholder="Ex: Pago por Maria Silva às 11:20"
+                            maxLength={120}
+                            value={txId}
+                            onChange={(e) => setTxId(e.target.value)}
+                            placeholder="Ex: E1234567820261114... (opcional)"
                         />
                     </label>
 
@@ -142,7 +146,7 @@ export default function PixModal({
                             Pagar depois
                         </button>
                         <button type="submit" className="btn-primary">
-                            Enviar Comprovante para o Adm
+                            Enviar Confirmação de Pix para o Adm
                         </button>
                     </div>
                 </form>
